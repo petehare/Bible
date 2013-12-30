@@ -1,0 +1,84 @@
+#include <pebble.h>
+#include "testamentlist.h"
+#include "../libs/pebble-assist.h"
+#include "../common.h"
+#include "windows/booklist.h"
+
+const char* testament_to_string(TestamentType testament);
+static uint16_t menu_get_num_sections_callback(struct MenuLayer *menu_layer, void *callback_context);
+static uint16_t menu_get_num_rows_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context);
+static int16_t menu_get_header_height_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context);
+static int16_t menu_get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context);
+static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *callback_context);
+static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context);
+static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context);
+
+static Window *window;
+static MenuLayer *menu_layer;
+
+void testamentlist_init(void) {
+	window = window_create();
+
+	menu_layer = menu_layer_create_fullscreen(window);
+	menu_layer_set_callbacks(menu_layer, NULL, (MenuLayerCallbacks) {
+		.get_num_sections = menu_get_num_sections_callback,
+		.get_num_rows = menu_get_num_rows_callback,
+		.get_header_height = menu_get_header_height_callback,
+		.get_cell_height = menu_get_cell_height_callback,
+		.draw_header = menu_draw_header_callback,
+		.draw_row = menu_draw_row_callback,
+		.select_click = menu_select_callback,
+	});
+	menu_layer_set_click_config_onto_window(menu_layer, window);
+	menu_layer_add_to_window(menu_layer, window);
+
+	window_stack_push(window, true);
+}
+
+void testamentlist_destroy(void) {
+	booklist_destroy();
+	layer_remove_from_parent(menu_layer_get_layer(menu_layer));
+	menu_layer_destroy_safe(menu_layer);
+	window_destroy_safe(window);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
+
+const char* testament_to_string(TestamentType testament) {
+	switch (testament) {
+		case TestamentTypeOld:
+			return "Old Testament";
+		case TestamentTypeNew:
+			return "New Testament";
+		default:
+			return "";
+	}
+}
+
+static uint16_t menu_get_num_sections_callback(struct MenuLayer *menu_layer, void *callback_context) {
+	return 1;
+}
+
+static uint16_t menu_get_num_rows_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context) {
+	return 2;
+}
+
+static int16_t menu_get_header_height_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context) {
+	return MENU_CELL_BASIC_HEADER_HEIGHT;
+}
+
+static int16_t menu_get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
+	return MENU_CELL_BASIC_CELL_HEIGHT;
+}
+
+static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *callback_context) {
+	menu_cell_basic_header_draw(ctx, cell_layer, "Testaments");
+}
+
+static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
+  menu_cell_basic_draw(ctx, cell_layer, testament_to_string((TestamentType)cell_index->row), NULL, NULL);
+}
+
+static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
+  booklist_init((TestamentType)cell_index->row);
+}

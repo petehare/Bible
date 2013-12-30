@@ -1,0 +1,22 @@
+{
+  "uuid": "984949d3-a991-4b1f-8ebb-3ff5867bde67",
+  "shortName": "Bible",
+  "longName": "Bible",
+  "companyName": "Pete Hare",
+  "versionCode": 1,
+  "versionLabel": "1.0.0",
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+		"list": 0,
+		"request": 1,
+		"index": 2,
+		"testament": 3,
+		"book": 4,
+		"chapter": 5
+	},
+  "resources": {
+    "media": []
+  }
+}
