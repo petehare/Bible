@@ -30,9 +30,6 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
 			case ListTypeBook:
 				booklist_in_received_handler(iter);
 				break;
-			case ListTypeChapter:
-//				chapter_in_received_handler(iter);
-				break;
       case ListTypeViewer:
 //				viewer_in_received_handler(iter);
 				break;
