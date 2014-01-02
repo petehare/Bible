@@ -13,16 +13,15 @@ var options = {
 
 var List = {
 	Book: 0,
-	Chapter: 1,
-	Viewer: 2
+	Viewer: 1
 };
 
 // temporary bible structure:
 var bible = [];
 
 // test data until we have configuration page
-bible.push([{name: 'Genesis', chapters: 21}, {name: 'Exodus', chapters: 12}]);
-bible.push([{name: 'Matthew', chapters: 21}, {name: 'Mark', chapters: 30}, {name: 'Luke', chapters: 21}]);
+bible.push([{name: 'Genesis', chapters: 21, tmp: ["verse 1 text", "verse 2 tesxt"]}, {name: 'Exodus', chapters: 12, tmp: ["verse 1 text", "verse 2 tesxt"]}]);
+bible.push([{name: 'Matthew', chapters: 21, tmp: ["verse 1 text", "verse 2 tesxt"]}, {name: 'Mark', chapters: 30, tmp: ["verse 1 text", "verse 2 tesxt"]}, {name: 'Luke', chapters: 21, tmp: ["verse 1 text", "verse 2 tesxt"]}]);
 
 // function sendPlayerList() {
 // 	for (var i = 0; i < players.length; i++) {
@@ -77,6 +76,15 @@ function sendBooksForTestament(testament) {
 			'chapter': books[i].chapters
 		}});
 	}
+	sendAppMessageQueue();
+}
+
+function sendTextForBookAndChapter(book, chapter) {
+	appMessageQueue.push({'message': {
+		'list': List.Viewer,
+		'request': true,
+		'content': "Content returned by the javascript api now"
+	}});
 	sendAppMessageQueue();
 }
 
@@ -141,6 +149,9 @@ Pebble.addEventListener('appmessage', function(e) {
 	switch (request) {
 		case 'books':
 			sendBooksForTestament(e.payload.testament);
+			break;
+		case 'viewer':
+			sendTextForBookAndChapter(e.payload.book, e.payload.chapter);
 			break;
 	}
 });

@@ -14,7 +14,8 @@
 		"index": 2,
 		"testament": 3,
 		"book": 4,
-		"chapter": 5
+		"chapter": 5,
+		"content": 6
 	},
   "resources": {
     "media": []

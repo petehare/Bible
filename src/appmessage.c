@@ -4,8 +4,7 @@
 #include "libs/pebble-assist.h"
 #include "windows/testamentlist.h"
 #include "windows/booklist.h"
-//#include "windows/chapterlist.h"
-//#include "windows/viewer.h"
+#include "windows/viewer.h"
 
 static void in_received_handler(DictionaryIterator *iter, void *context);
 static void in_dropped_handler(AppMessageResult reason, void *context);
@@ -31,7 +30,7 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
 				booklist_in_received_handler(iter);
 				break;
       case ListTypeViewer:
-//				viewer_in_received_handler(iter);
+				viewer_in_received_handler(iter);
 				break;
 		}
 	}

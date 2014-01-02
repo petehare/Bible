@@ -2,7 +2,7 @@
 #include "booklist.h"
 #include "../libs/pebble-assist.h"
 #include "../common.h"
-//#include "windows/viewer.h"
+#include "windows/viewer.h"
 
 #define MAX_CHAPTERS 150
 
@@ -40,7 +40,7 @@ void chapterlist_init(Book *book) {
 }
 
 void chapterlist_destroy(void) {
-//	viewer_destroy();
+	viewer_destroy();
 	layer_remove_from_parent(menu_layer_get_layer(menu_layer));
 	menu_layer_destroy_safe(menu_layer);
 	window_destroy_safe(window);
@@ -82,4 +82,5 @@ static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_i
 	if (current_book->chapters == 0) {
 		return;
 	}
+  viewer_init(current_book, cell_index->row + 1);
 }

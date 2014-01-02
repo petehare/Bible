@@ -2,8 +2,7 @@
 
 typedef enum {
 	ListTypeBook = 0x0,
-	ListTypeChapter = 0x1,
-  ListTypeViewer = 0x2
+  ListTypeViewer = 0x1
 } ListType;
 
 typedef enum {
@@ -23,5 +22,6 @@ enum {
   KEY_INDEX,
   KEY_TESTAMENT,
 	KEY_BOOK,
-	KEY_CHAPTER
+	KEY_CHAPTER,
+  KEY_CONTENT
 };
