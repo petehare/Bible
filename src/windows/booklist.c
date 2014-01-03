@@ -21,6 +21,7 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context);
 static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context);
 static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context);
+static void window_load(Window *window);
 
 static Window *window;
 static MenuLayer *menu_layer;
@@ -28,6 +29,10 @@ static MenuLayer *menu_layer;
 void booklist_init(TestamentType testament) {
 	window = window_create();
   current_testament = testament;
+
+  window_set_window_handlers(window, (WindowHandlers) {
+		.load = window_load,
+	});
 
 	menu_layer = menu_layer_create_fullscreen(window);
 	menu_layer_set_callbacks(menu_layer, NULL, (MenuLayerCallbacks) {
@@ -44,13 +49,10 @@ void booklist_init(TestamentType testament) {
 	menu_layer_add_to_window(menu_layer, window);
 
 	window_stack_push(window, true);
-
-  refresh_list();
 }
 
 void booklist_destroy(void) {
 	chapterlist_destroy();
-  // TODO: destroy books data
 	layer_remove_from_parent(menu_layer_get_layer(menu_layer));
 	menu_layer_destroy_safe(menu_layer);
 	window_destroy_safe(window);
@@ -115,7 +117,7 @@ static int16_t menu_get_header_height_callback(struct MenuLayer *menu_layer, uin
 }
 
 static int16_t menu_get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
-	return MENU_CELL_BASIC_CELL_HEIGHT;
+	return 30;
 }
 
 static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *callback_context) {
@@ -139,4 +141,8 @@ static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_i
 
 static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
 	refresh_list();
+}
+
+static void window_load(Window *window) {
+  refresh_list();
 }

@@ -157,5 +157,6 @@ function isset(i) {
 
 function cleanString(dirtyString) {
 	dirtyString = dirtyString.replace(/&#8211;/g, "-");
+	dirtyString = dirtyString.replace(/‘|’/g, "'");
 	return dirtyString.replace(/”|“/g, '"');
 }

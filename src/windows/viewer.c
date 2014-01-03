@@ -10,13 +10,12 @@ static int current_chapter;
 static char *current_text;
 
 static void request_data();
+static void window_load(Window *window);
+static void window_unload(Window *window);
 
 static Window *window;
 static ScrollLayer *scroll_layer;
 static TextLayer *text_layer;
-
-static void window_load(Window *window);
-static void window_unload(Window *window);
 
 void viewer_init(Book *book, int chapter) {
 	window = window_create();
@@ -26,7 +25,7 @@ void viewer_init(Book *book, int chapter) {
 
   window_set_window_handlers(window, (WindowHandlers) {
 		.load = window_load,
-		.unload = window_unload,
+    .unload = window_unload,
 	});
 
   Layer *window_layer = window_get_root_layer(window);
@@ -106,5 +105,6 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
-
+  free(current_text);
+  current_text = NULL;
 }
