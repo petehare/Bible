@@ -18,6 +18,13 @@
 		"content": 6
 	},
   "resources": {
-    "media": []
+    "media": [
+			{
+				"menuIcon": true,
+				"type": "png",
+				"name": "IMAGE_MENU_ICON",
+				"file": "images/icon.png"
+			}
+		]
   }
 }
