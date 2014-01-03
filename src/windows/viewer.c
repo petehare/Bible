@@ -7,7 +7,7 @@
 
 static Book *current_book;
 static int current_chapter;
-static char *current_text = LOADING_TEXT;
+static char *current_text;
 
 static void request_data();
 
@@ -15,27 +15,32 @@ static Window *window;
 static ScrollLayer *scroll_layer;
 static TextLayer *text_layer;
 
+static void window_load(Window *window);
+static void window_unload(Window *window);
+
 void viewer_init(Book *book, int chapter) {
 	window = window_create();
+
   current_book = book;
   current_chapter = chapter;
+
+  window_set_window_handlers(window, (WindowHandlers) {
+		.load = window_load,
+		.unload = window_unload,
+	});
 
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_frame(window_layer);
 	scroll_layer = scroll_layer_create(bounds);
 
 	scroll_layer_set_click_config_onto_window(scroll_layer, window);
-
   text_layer = text_layer_create(bounds);
-  text_layer_set_text(text_layer, current_text);
   text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
 
   scroll_layer_add_child(scroll_layer, text_layer_get_layer(text_layer));
 	layer_add_child(window_layer, scroll_layer_get_layer(scroll_layer));
 
 	window_stack_push(window, true);
-
-  request_data();
 }
 
 void viewer_destroy(void) {
@@ -58,6 +63,7 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
     if (strcmp(current_text, LOADING_TEXT))
     {
       strcpy(new_text, current_text);
+      free(current_text);
     }
     strcat(new_text, additional_text);
     current_text = new_text;
@@ -93,11 +99,12 @@ static void request_data() {
 	app_message_outbox_send();
 }
 
-//static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
-//	if (num_books == 0) {
-//		menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
-//	} else {
-//    menu_cell_basic_draw(ctx, cell_layer, books[cell_index->row].name, NULL, NULL);
-//	}
-//}
+static void window_load(Window *window) {
+  current_text = LOADING_TEXT;
+  text_layer_set_text(text_layer, current_text);
+  request_data();
+}
 
+static void window_unload(Window *window) {
+
+}

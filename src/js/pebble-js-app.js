@@ -4,7 +4,8 @@ var options = {
 	appMessage: {
 		maxTries: 3,
 		retryTimeout: 3000,
-		timeout: 100
+		timeout: 100,
+		packetLength: 96
 	},
 	http: {
 		timeout: 20000
@@ -16,12 +17,8 @@ var List = {
 	Viewer: 1
 };
 
-// temporary bible structure:
+// bible structure
 var bible = [];
-var versePacketLenth = 96;
-var reallyLongString = "Aliquam et nisl vel ligula consectetuer suscipit. Morbi euismod enim eget neque. Donec sagittis massa. Vestibulum quis augue sit amet ipsum laoreet pretium. Nulla facilisi. Duis tincidunt, felis et luctus placerat, ipsum libero vestibulum sem, vitae elementum wisi ipsum a metus. Nulla a enim sed dui hendrerit lobortis. Donec lacinia vulputate magna. Vivamus suscipit lectus at quam. In lectus est, viverra a, ultricies ut, pulvinar vitae, tellus. Donec et lectus et sem rutrum sodales. Morbi cursus. Aliquam a odio. Sed tortor velit, convallis eget, porta interdum, convallis sed, tortor. Phasellus ac libero a lorem auctor mattis. Lorem ipsum dolor sit amet, consectetuer adipiscing elit.";
-
-// store frequent data here
 bible.push([{"name":"Genesis","chapters":50},{"name":"Exodus","chapters":40},{"name":"Leviticus","chapters":27},{"name":"Numbers","chapters":36},{"name":"Deuteronomy","chapters":34},{"name":"Joshua","chapters":24},{"name":"Judges","chapters":21},{"name":"Ruth","chapters":4},{"name":"1 Samuel","chapters":31},{"name":"2 Samuel","chapters":24},{"name":"1 Kings","chapters":22},{"name":"2 Kings","chapters":25},{"name":"1 Chronicles","chapters":29},{"name":"2 Chronicles","chapters":36},{"name":"Ezra","chapters":10},{"name":"Nehemiah","chapters":13},{"name":"Esther","chapters":10},{"name":"Job","chapters":42},{"name":"Psalms","chapters":150},{"name":"Proverbs","chapters":31},{"name":"Ecclesiastes","chapters":12},{"name":"Song of Solomon","chapters":8},{"name":"Isaiah","chapters":66},{"name":"Jeremiah","chapters":52},{"name":"Lamentations","chapters":5},{"name":"Ezekiel","chapters":48},{"name":"Daniel","chapters":12},{"name":"Hosea","chapters":14},{"name":"Joel","chapters":3},{"name":"Amos","chapters":9},{"name":"Obadiah","chapters":1},{"name":"Jonah","chapters":4},{"name":"Micah","chapters":7},{"name":"Nahum","chapters":3},{"name":"Habakkuk","chapters":3},{"name":"Zephaniah","chapters":3},{"name":"Haggai","chapters":2},{"name":"Zechariah","chapters":14},{"name":"Malachi","chapters":4}]);
 bible.push([{"name":"Matthew","chapters":28},{"name":"Mark","chapters":16},{"name":"Luke","chapters":24},{"name":"John","chapters":21},{"name":"Acts","chapters":28},{"name":"Romans","chapters":16},{"name":"1 Corinthians","chapters":16},{"name":"2 Corinthians","chapters":13},{"name":"Galatians","chapters":6},{"name":"Ephesians","chapters":6},{"name":"Philippians","chapters":4},{"name":"Colossians","chapters":4},{"name":"1 Thessalonians","chapters":5},{"name":"2 Thessalonians","chapters":3},{"name":"1 Timothy","chapters":6},{"name":"2 Timothy","chapters":4},{"name":"Titus","chapters":3},{"name":"Philemon","chapters":1},{"name":"Hebrews","chapters":13},{"name":"James","chapters":5},{"name":"1 Peter","chapters":5},{"name":"2 Peter","chapters":3},{"name":"1 John","chapters":5},{"name":"2 John","chapters":1},{"name":"3 John","chapters":1},{"name":"Jude","chapters":1},{"name":"Revelation","chapters":22}]);
 
@@ -68,70 +65,59 @@ function sendBooksForTestament(testament) {
 	sendAppMessageQueue();
 }
 
-function sendTextForBookAndChapter(book, chapter) {
-	var messageCount = Math.ceil(reallyLongString.length / versePacketLenth);
+function sendTextForVerse(text) {
+	var messageCount = Math.ceil(text.length / options.appMessage.packetLength);
 	for (var i = 0; i < messageCount; i++)
 	{
 		appMessageQueue.push({'message': {
 			'list': List.Viewer,
 			'request': true,
-			'content': reallyLongString.substring(i * versePacketLenth, (i+1) * versePacketLenth)
+			'content': cleanString(text.substring(i * options.appMessage.packetLength, (i+1) * options.appMessage.packetLength))
 		}});
 	}
 	sendAppMessageQueue();
 }
 
-// function getBooksForTestament(testament) {
-// 	var xhr = new XMLHttpRequest();
-// 	xhr.open('GET', 'http://' + players[index].server.host + '/requests/status.json?' + request, true, '', players[index].server.pass);
-// 	xhr.timeout = options.http.timeout;
-// 	xhr.onload = function(e) {
-// 		if (xhr.readyState == 4) {
-// 			if (xhr.status == 200) {
-// 				if (xhr.responseText) {
-// 					res    = JSON.parse(xhr.responseText);
-// 					title  = res.information || players[index].title;
-// 					title  = title.category || players[index].title;
-// 					title  = title.meta || players[index].title;
-// 					title  = title.filename || players[index].title;
-// 					title  = title.substring(0,30);
-// 					status = res.state ? res.state.charAt(0).toUpperCase()+res.state.slice(1) : 'Unknown';
-// 					status = status.substring(0,30);
-// 					volume = res.volume || 0;
-// 					volume = (volume / 512) * 200;
-// 					volume = (volume > 200) ? 200 : volume;
-// 					volume = Math.round(volume);
-// 					length = res.length || 0;
-// 					seek   = res.time || 0;
-// 					seek   = (seek / length) * 100;
-// 					seek   = Math.round(seek);
-// 					appMessageQueue.push({'message': {'player': mediaPlayer.VLC, 'title': title, 'status': status, 'volume': volume, 'seek': seek}});
-// 				} else {
-// 					console.log('Invalid response received! ' + JSON.stringify(xhr));
-// 					appMessageQueue.push({'message': {'player': mediaPlayer.VLC, 'title': 'Error: Invalid response received!'}});
-// 				}
-// 			} else {
-// 				console.log('Request returned error code ' + xhr.status.toString());
-// 				appMessageQueue.push({'message': {'Error: ' + xhr.statusText}});
-// 			}
-// 		}
-// 		sendAppMessageQueue();
-// 	};
-// 	xhr.ontimeout = function() {
-// 		console.log('HTTP request timed out');
-// 		appMessageQueue.push({'message': {'error': 'Error: Request timed out!'}});
-// 		sendAppMessageQueue();
-// 	};
-// 	xhr.onerror = function() {
-// 		console.log('HTTP request returned error');
-// 		appMessageQueue.push({'message': {'error': 'Error: Failed to connect!'}});
-// 		sendAppMessageQueue();
-// 	};
-// 	xhr.send(null);
-// }
+function requestVerseText(book, chapter) {
+	var xhr = new XMLHttpRequest();
+	var url = "http://labs.bible.org/api/?passage="+encodeURI(book + ' ' + chapter)+"&type=json";
+	console.log("Fetching verse data from: " + url);
+	xhr.open('GET', url);
+	xhr.timeout = options.http.timeout;
+	xhr.onload = function(e) {
+		if (xhr.readyState == 4) {
+			if (xhr.status == 200) {
+				if (xhr.responseText) {
+					res = JSON.parse(xhr.responseText);
+					var verseText = "";
+					for (var i in res)
+					{
+						verseText += res[i].verse + ")" + res[i].text + " ";
+					}
+					sendTextForVerse(verseText);
+				} else {
+					console.log('Invalid response received! ' + JSON.stringify(xhr));
+				}
+			} else {
+				console.log('Request returned error code ' + xhr.status.toString());
+			}
+		}
+		sendAppMessageQueue();
+	};
+	xhr.ontimeout = function() {
+		console.log('HTTP request timed out');
+		appMessageQueue.push({'message': {'error': 'Error: Request timed out!'}});
+		sendAppMessageQueue();
+	};
+	xhr.onerror = function() {
+		console.log('HTTP request returned error');
+		appMessageQueue.push({'message': {'error': 'Error: Failed to connect!'}});
+		sendAppMessageQueue();
+	};
+	xhr.send(null);
+}
 
 Pebble.addEventListener('ready', function(e) {
-// 	sendPlayerList();
 	console.log('JS application ready to go!');
 });
 
@@ -144,7 +130,7 @@ Pebble.addEventListener('appmessage', function(e) {
 			sendBooksForTestament(e.payload.testament);
 			break;
 		case 'viewer':
-			sendTextForBookAndChapter(e.payload.book, e.payload.chapter);
+			requestVerseText(e.payload.book, e.payload.chapter);
 			break;
 	}
 });
@@ -167,4 +153,9 @@ Pebble.addEventListener('appmessage', function(e) {
 
 function isset(i) {
 	return (typeof i != 'undefined')
+}
+
+function cleanString(dirtyString) {
+	dirtyString = dirtyString.replace(/&#8211;/g, "-");
+	return dirtyString.replace(/”|“/g, '"');
 }
