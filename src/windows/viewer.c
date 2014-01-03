@@ -3,9 +3,11 @@
 #include "../libs/pebble-assist.h"
 #include "../common.h"
 
+#define LOADING_TEXT "Loading..."
+
 static Book *current_book;
 static int current_chapter;
-static bool loading;
+static char *current_text = LOADING_TEXT;
 
 static void request_data();
 
@@ -25,9 +27,8 @@ void viewer_init(Book *book, int chapter) {
 	scroll_layer_set_click_config_onto_window(scroll_layer, window);
 
   text_layer = text_layer_create(bounds);
-  text_layer_set_text(text_layer, "Loading...");
+  text_layer_set_text(text_layer, current_text);
   text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  loading = true;
 
   scroll_layer_add_child(scroll_layer, text_layer_get_layer(text_layer));
 	layer_add_child(window_layer, scroll_layer_get_layer(scroll_layer));
@@ -52,20 +53,15 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
 
     text_layer_set_size(text_layer, GSize(bounds.size.w, 5000));
 
-    if (loading)
+    char *additional_text = content_tuple->value->cstring;
+    char *new_text = malloc((strlen(current_text) + strlen(additional_text) + 1));
+    if (strcmp(current_text, LOADING_TEXT))
     {
-      text_layer_set_text(text_layer, content_tuple->value->cstring);
-      loading = false;
+      strcpy(new_text, current_text);
     }
-    else
-    {
-      const char *previous_text = text_layer_get_text(text_layer);
-      char *additional_text = content_tuple->value->cstring;
-      char *new_text = malloc((strlen(previous_text) + strlen(additional_text) + 1));
-      strcpy(new_text, previous_text);
-      strcat(new_text, additional_text);
-      text_layer_set_text(text_layer, new_text);
-    }
+    strcat(new_text, additional_text);
+    current_text = new_text;
+    text_layer_set_text(text_layer, current_text);
 
     GSize max_size = text_layer_get_content_size(text_layer);
     text_layer_set_size(text_layer, max_size);

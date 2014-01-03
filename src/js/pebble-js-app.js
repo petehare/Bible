@@ -88,7 +88,7 @@ function sendTextForBookAndChapter(book, chapter) {
 		appMessageQueue.push({'message': {
 			'list': List.Viewer,
 			'request': true,
-			'content': reallyLongString.substring(i * versePacketLenth, (i+1) * versePacketLenth - 1)
+			'content': reallyLongString.substring(i * versePacketLenth, (i+1) * versePacketLenth)
 		}});
 	}
 	sendAppMessageQueue();
