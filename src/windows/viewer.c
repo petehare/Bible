@@ -5,6 +5,7 @@
 
 static Book *current_book;
 static int current_chapter;
+static bool loading;
 
 static void request_data();
 
@@ -25,7 +26,8 @@ void viewer_init(Book *book, int chapter) {
 
   text_layer = text_layer_create(bounds);
   text_layer_set_text(text_layer, "Loading...");
-  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  loading = true;
 
   scroll_layer_add_child(scroll_layer, text_layer_get_layer(text_layer));
 	layer_add_child(window_layer, scroll_layer_get_layer(scroll_layer));
@@ -48,11 +50,26 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_frame(window_layer);
 
-    text_layer_set_text(text_layer, content_tuple->value->cstring);
+    text_layer_set_size(text_layer, GSize(bounds.size.w, 5000));
+
+    if (loading)
+    {
+      text_layer_set_text(text_layer, content_tuple->value->cstring);
+      loading = false;
+    }
+    else
+    {
+      const char *previous_text = text_layer_get_text(text_layer);
+      char *additional_text = content_tuple->value->cstring;
+      char *new_text = malloc((strlen(previous_text) + strlen(additional_text) + 1));
+      strcpy(new_text, previous_text);
+      strcat(new_text, additional_text);
+      text_layer_set_text(text_layer, new_text);
+    }
+
     GSize max_size = text_layer_get_content_size(text_layer);
     text_layer_set_size(text_layer, max_size);
     scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h));
-    layer_mark_dirty(scroll_layer_get_layer(scroll_layer));
 
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "received content for chapter[%d] %s", current_chapter, current_book->name);
 	}

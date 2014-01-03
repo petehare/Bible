@@ -18,6 +18,8 @@ var List = {
 
 // temporary bible structure:
 var bible = [];
+var versePacketLenth = 96;
+var reallyLongString = "Aliquam et nisl vel ligula consectetuer suscipit. Morbi euismod enim eget neque. Donec sagittis massa. Vestibulum quis augue sit amet ipsum laoreet pretium. Nulla facilisi. Duis tincidunt, felis et luctus placerat, ipsum libero vestibulum sem, vitae elementum wisi ipsum a metus. Nulla a enim sed dui hendrerit lobortis. Donec lacinia vulputate magna. Vivamus suscipit lectus at quam. In lectus est, viverra a, ultricies ut, pulvinar vitae, tellus. Donec et lectus et sem rutrum sodales. Morbi cursus. Aliquam a odio. Sed tortor velit, convallis eget, porta interdum, convallis sed, tortor. Phasellus ac libero a lorem auctor mattis. Lorem ipsum dolor sit amet, consectetuer adipiscing elit.";
 
 // test data until we have configuration page
 bible.push([{name: 'Genesis', chapters: 21, tmp: ["verse 1 text", "verse 2 tesxt"]}, {name: 'Exodus', chapters: 12, tmp: ["verse 1 text", "verse 2 tesxt"]}]);
@@ -80,11 +82,15 @@ function sendBooksForTestament(testament) {
 }
 
 function sendTextForBookAndChapter(book, chapter) {
-	appMessageQueue.push({'message': {
-		'list': List.Viewer,
-		'request': true,
-		'content': "Content returned by the javascript api now"
-	}});
+	var messageCount = Math.ceil(reallyLongString.length / versePacketLenth);
+	for (var i = 0; i < messageCount; i++)
+	{
+		appMessageQueue.push({'message': {
+			'list': List.Viewer,
+			'request': true,
+			'content': reallyLongString.substring(i * versePacketLenth, (i+1) * versePacketLenth - 1)
+		}});
+	}
 	sendAppMessageQueue();
 }
 
