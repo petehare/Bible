@@ -4,6 +4,7 @@
 #include "../common.h"
 
 #define LOADING_TEXT "Loading..."
+#define PADDING 5
 
 static Book *current_book;
 static int current_chapter;
@@ -35,7 +36,7 @@ void viewer_init(Book *book, int chapter) {
 	scroll_layer = scroll_layer_create(bounds);
 
 	scroll_layer_set_click_config_onto_window(scroll_layer, window);
-  text_layer = text_layer_create(bounds);
+  text_layer = text_layer_create(GRect(PADDING, PADDING, bounds.size.w - PADDING*2, bounds.size.h - PADDING*2));
   text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
 
   scroll_layer_add_child(scroll_layer, text_layer_get_layer(text_layer));
@@ -62,7 +63,7 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
 
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_frame(window_layer);
-    text_layer_set_size(text_layer, GSize(bounds.size.w, 5000));
+    text_layer_set_size(text_layer, GSize(bounds.size.w - PADDING*2, 9999));
 
     char *additional_text = content_tuple->value->cstring;
     char *new_text;
@@ -82,7 +83,7 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
     text_layer_set_text(text_layer, current_text);
     GSize max_size = text_layer_get_content_size(text_layer);
     text_layer_set_size(text_layer, max_size);
-    scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h));
+    scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h + PADDING*2));
 
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "received content for chapter[%d] %s", current_chapter, current_book->name);
 	}

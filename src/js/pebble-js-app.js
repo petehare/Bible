@@ -98,7 +98,7 @@ function requestVerseText(book, chapter, token) {
 					var verseText = "";
 					for (var i in res)
 					{
-						verseText += res[i].verse + ")" + res[i].text + " ";
+						verseText += res[i].verse + ") " + res[i].text + " ";
 					}
 					sendTextForVerse(verseText, token);
 				} else {
