@@ -74,7 +74,7 @@ void booklist_in_received_handler(DictionaryIterator *iter) {
 		book.chapters = chapter_tuple->value->int16;
 		books[book.index] = book;
 		num_books++;
-		menu_layer_reload_data_and_mark_dirty(menu_layer);
+		menu_layer_reload_data(menu_layer);
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "received book [%d] %s", book.index, book.name);
 	}
 }
@@ -85,9 +85,9 @@ static void refresh_list() {
 	memset(books, 0x0, sizeof(books));
 	num_books = 0;
 	menu_layer_set_selected_index(menu_layer, (MenuIndex) { .row = 0, .section = 0 }, MenuRowAlignBottom, false);
-	menu_layer_reload_data_and_mark_dirty(menu_layer);
+	menu_layer_reload_data(menu_layer);
 	request_data();
-	menu_layer_reload_data_and_mark_dirty(menu_layer);
+	menu_layer_reload_data(menu_layer);
 }
 
 static void request_data() {
