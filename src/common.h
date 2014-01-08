@@ -10,6 +10,8 @@ typedef enum {
 	TestamentTypeNew = 0x1,
 } TestamentType;
 
+const char* testament_to_string(TestamentType testament);
+
 typedef struct {
   int index;
 	char name[24];
