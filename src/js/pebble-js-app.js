@@ -23,7 +23,7 @@ bible.push([{"name":"Genesis","chapters":50},{"name":"Exodus","chapters":40},{"n
 bible.push([{"name":"Matthew","chapters":28},{"name":"Mark","chapters":16},{"name":"Luke","chapters":24},{"name":"John","chapters":21},{"name":"Acts","chapters":28},{"name":"Romans","chapters":16},{"name":"1 Corinthians","chapters":16},{"name":"2 Corinthians","chapters":13},{"name":"Galatians","chapters":6},{"name":"Ephesians","chapters":6},{"name":"Philippians","chapters":4},{"name":"Colossians","chapters":4},{"name":"1 Thessalonians","chapters":5},{"name":"2 Thessalonians","chapters":3},{"name":"1 Timothy","chapters":6},{"name":"2 Timothy","chapters":4},{"name":"Titus","chapters":3},{"name":"Philemon","chapters":1},{"name":"Hebrews","chapters":13},{"name":"James","chapters":5},{"name":"1 Peter","chapters":5},{"name":"2 Peter","chapters":3},{"name":"1 John","chapters":5},{"name":"2 John","chapters":1},{"name":"3 John","chapters":1},{"name":"Jude","chapters":1},{"name":"Revelation","chapters":22}]);
 
 function sendAppMessageQueue(token) {
-	if (appMessageQueues[token].length > 0) {
+	if (typeof appMessageQueues[token] != 'undefined' && appMessageQueues[token].length > 0) {
 		currentAppMessage = appMessageQueues[token][0];
 		currentAppMessage.numTries = currentAppMessage.numTries || 0;
 		currentAppMessage.transactionId = currentAppMessage.transactionId || -1;

@@ -86,7 +86,7 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
     text_layer_set_size(text_layer, max_size);
     scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h + PADDING*2));
 
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "received content for chapter[%d] %s", current_chapter, current_book->name);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "received content for chapter [%d] %s", current_chapter, current_book->name);
 	}
 }
 
@@ -98,7 +98,6 @@ static void request_data() {
   Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
 
   request_token = (int)time(NULL);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "TOken set as [%d]", request_token);
   Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
 
 	DictionaryIterator *iter;
@@ -125,5 +124,8 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
+  free(current_text);
+  current_text = NULL;
   cancel_request_with_token(request_token);
+  request_token = 0;
 }

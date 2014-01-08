@@ -79,7 +79,7 @@ void booklist_in_received_handler(DictionaryIterator *iter) {
 		books[book.index] = book;
 		num_books++;
 		menu_layer_reload_data(menu_layer);
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "received book [%d] %s", book.index, book.name);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "Received book [%d] %s", book.index, book.name);
 	}
 }
 
