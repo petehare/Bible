@@ -7,6 +7,7 @@
 
 static Book *current_book;
 static int current_chapter;
+static int current_index;
 static char *current_text;
 
 static void request_data();
@@ -50,24 +51,30 @@ void viewer_destroy(void) {
 
 void viewer_in_received_handler(DictionaryIterator *iter) {
 	Tuple *content_tuple = dict_find(iter, KEY_CONTENT);
+  Tuple *index_tuple = dict_find(iter, KEY_INDEX);
+//  Tuple *book_tuple = dict_find(iter, KEY_BOOK);
+//  Tuple *chapter_tuple = dict_find(iter, KEY_CHAPTER);
 
-	if (content_tuple) {
+	if (content_tuple && index_tuple /* && book_tuple && chapter_tuple*/) {
+//    if (strcmp(book_tuple->value->cstring, current_book->name) != 0) return;
+//    if (chapter_tuple->value->int16 != current_chapter) return;
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "received content, checking index [%d] -> [%d]", index_tuple->value->int16, current_index);
+    if (index_tuple->value->int16 <= current_index) return;
+    current_index = index_tuple->value->int16;
+
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_frame(window_layer);
-
     text_layer_set_size(text_layer, GSize(bounds.size.w, 5000));
-
     char *additional_text = content_tuple->value->cstring;
     char *new_text = malloc((strlen(current_text) + strlen(additional_text) + 1));
     if (strcmp(current_text, LOADING_TEXT))
     {
       strcpy(new_text, current_text);
-      free(current_text);
     }
     strcat(new_text, additional_text);
+    free(current_text);
     current_text = new_text;
     text_layer_set_text(text_layer, current_text);
-
     GSize max_size = text_layer_get_content_size(text_layer);
     text_layer_set_size(text_layer, max_size);
     scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h));
@@ -100,11 +107,11 @@ static void request_data() {
 
 static void window_load(Window *window) {
   current_text = LOADING_TEXT;
+  current_index = -1;
   text_layer_set_text(text_layer, current_text);
   request_data();
 }
 
 static void window_unload(Window *window) {
-  free(current_text);
-  current_text = NULL;
+
 }

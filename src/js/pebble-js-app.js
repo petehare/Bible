@@ -5,7 +5,7 @@ var options = {
 		maxTries: 3,
 		retryTimeout: 3000,
 		timeout: 100,
-		packetLength: 96
+		packetLength: 60
 	},
 	http: {
 		timeout: 20000
@@ -31,7 +31,7 @@ function sendAppMessageQueue() {
 			console.log('Sending AppMessage to Pebble: ' + JSON.stringify(currentAppMessage.message));
 			Pebble.sendAppMessage(
 				currentAppMessage.message,
-				function(e) {
+				function(e) {	
 					appMessageQueue.shift();
 					setTimeout(function() {
 						sendAppMessageQueue();
@@ -65,13 +65,16 @@ function sendBooksForTestament(testament) {
 	sendAppMessageQueue();
 }
 
-function sendTextForVerse(text) {
+function sendTextForVerse(text, book, chapter) {
 	var messageCount = Math.ceil(text.length / options.appMessage.packetLength);
 	for (var i = 0; i < messageCount; i++)
 	{
 		appMessageQueue.push({'message': {
 			'list': List.Viewer,
+			'index': i,
 			'request': true,
+			'book': book,
+			'chapter': chapter,
 			'content': cleanString(text.substring(i * options.appMessage.packetLength, (i+1) * options.appMessage.packetLength))
 		}});
 	}
@@ -94,7 +97,7 @@ function requestVerseText(book, chapter) {
 					{
 						verseText += res[i].verse + ")" + res[i].text + " ";
 					}
-					sendTextForVerse(verseText);
+					sendTextForVerse(verseText, book, chapter);
 				} else {
 					console.log('Invalid response received! ' + JSON.stringify(xhr));
 				}
@@ -102,7 +105,6 @@ function requestVerseText(book, chapter) {
 				console.log('Request returned error code ' + xhr.status.toString());
 			}
 		}
-		sendAppMessageQueue();
 	};
 	xhr.ontimeout = function() {
 		console.log('HTTP request timed out');
