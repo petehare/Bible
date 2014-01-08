@@ -76,7 +76,8 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
 }
 
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
-  menu_cell_basic_draw(ctx, cell_layer, testament_to_string((TestamentType)cell_index->row), NULL, NULL);
+  graphics_context_set_text_color(ctx, GColorBlack);
+  graphics_draw_text(ctx, testament_to_string((TestamentType)cell_index->row), fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 5 }, .size = { PEBBLE_WIDTH - 8, 24 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 }
 
 static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
