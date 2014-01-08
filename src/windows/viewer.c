@@ -8,6 +8,7 @@
 static Book *current_book;
 static int current_chapter;
 static int current_index;
+static int request_token;
 static char *current_text;
 
 static void request_data();
@@ -52,26 +53,30 @@ void viewer_destroy(void) {
 void viewer_in_received_handler(DictionaryIterator *iter) {
 	Tuple *content_tuple = dict_find(iter, KEY_CONTENT);
   Tuple *index_tuple = dict_find(iter, KEY_INDEX);
-//  Tuple *book_tuple = dict_find(iter, KEY_BOOK);
-//  Tuple *chapter_tuple = dict_find(iter, KEY_CHAPTER);
+  Tuple *token_tuple = dict_find(iter, KEY_TOKEN);
 
-	if (content_tuple && index_tuple /* && book_tuple && chapter_tuple*/) {
-//    if (strcmp(book_tuple->value->cstring, current_book->name) != 0) return;
-//    if (chapter_tuple->value->int16 != current_chapter) return;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "received content, checking index [%d] -> [%d]", index_tuple->value->int16, current_index);
+	if (content_tuple && index_tuple && token_tuple) {
+    if (token_tuple->value->int32 != request_token) return;
     if (index_tuple->value->int16 <= current_index) return;
     current_index = index_tuple->value->int16;
 
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_frame(window_layer);
     text_layer_set_size(text_layer, GSize(bounds.size.w, 5000));
+
     char *additional_text = content_tuple->value->cstring;
-    char *new_text = malloc((strlen(current_text) + strlen(additional_text) + 1));
-    if (strcmp(current_text, LOADING_TEXT))
+    char *new_text;
+    if (strcmp(current_text, LOADING_TEXT) == 0)
     {
-      strcpy(new_text, current_text);
+      new_text = malloc(strlen(additional_text) + 1);
+      strcpy(new_text, additional_text);
     }
-    strcat(new_text, additional_text);
+    else
+    {
+      new_text = malloc((strlen(current_text) + strlen(additional_text) + 1));
+      strcpy(new_text, current_text);
+      strcat(new_text, additional_text);
+    }
     free(current_text);
     current_text = new_text;
     text_layer_set_text(text_layer, current_text);
@@ -90,6 +95,10 @@ static void request_data() {
 	Tuplet book_tuple = TupletCString(KEY_BOOK, current_book->name);
   Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
 
+  request_token = (int)time(NULL);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "TOken set as [%d]", request_token);
+  Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
+
 	DictionaryIterator *iter;
 	app_message_outbox_begin(&iter);
 
@@ -100,6 +109,7 @@ static void request_data() {
 	dict_write_tuplet(iter, &request_tuple);
 	dict_write_tuplet(iter, &book_tuple);
   dict_write_tuplet(iter, &chapter_tuple);
+  dict_write_tuplet(iter, &token_tuple);
 	dict_write_end(iter);
 
 	app_message_outbox_send();

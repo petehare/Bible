@@ -15,7 +15,8 @@
 		"testament": 3,
 		"book": 4,
 		"chapter": 5,
-		"content": 6
+		"content": 6,
+		"token": 7
 	},
   "resources": {
     "media": [

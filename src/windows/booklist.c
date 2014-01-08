@@ -10,6 +10,7 @@ static Book books[MAX_BOOKS];
 
 static TestamentType current_testament;
 static int num_books;
+static int request_token;
 
 static void refresh_list();
 static void request_data();
@@ -62,8 +63,11 @@ void booklist_in_received_handler(DictionaryIterator *iter) {
   Tuple *index_tuple = dict_find(iter, KEY_INDEX);
 	Tuple *book_tuple = dict_find(iter, KEY_BOOK);
 	Tuple *chapter_tuple = dict_find(iter, KEY_CHAPTER);
+  Tuple *token_tuple = dict_find(iter, KEY_TOKEN);
 
-	if (book_tuple && chapter_tuple) {
+	if (book_tuple && chapter_tuple && token_tuple) {
+    if (token_tuple->value->int32 != request_token) return;
+
 		Book book;
     book.index = index_tuple->value->int16;
 		strncpy(book.name, book_tuple->value->cstring, sizeof(book.name));
@@ -90,6 +94,9 @@ static void request_data() {
   Tuplet request_tuple = TupletCString(KEY_REQUEST, "books");
 	Tuplet testament_tuple = TupletInteger(KEY_TESTAMENT, current_testament);
 
+  request_token = (int)time(NULL);
+  Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
+
 	DictionaryIterator *iter;
 	app_message_outbox_begin(&iter);
 
@@ -99,6 +106,7 @@ static void request_data() {
 
 	dict_write_tuplet(iter, &request_tuple);
 	dict_write_tuplet(iter, &testament_tuple);
+  dict_write_tuplet(iter, &token_tuple);
 	dict_write_end(iter);
 
 	app_message_outbox_send();

@@ -5,7 +5,7 @@ var options = {
 		maxTries: 3,
 		retryTimeout: 3000,
 		timeout: 100,
-		packetLength: 60
+		packetLength: 70
 	},
 	http: {
 		timeout: 20000
@@ -51,10 +51,11 @@ function sendAppMessageQueue() {
 	}
 }
 
-function sendBooksForTestament(testament) {
+function sendBooksForTestament(testament, token) {
 	var books = bible[testament];
 	for (var i = 0; i < books.length; i++) {
 		appMessageQueue.push({'message': {
+			'token': token,
 			'list': List.Book,
 			'index': i,
 			'request': true,
@@ -65,23 +66,22 @@ function sendBooksForTestament(testament) {
 	sendAppMessageQueue();
 }
 
-function sendTextForVerse(text, book, chapter) {
+function sendTextForVerse(text, token) {
 	var messageCount = Math.ceil(text.length / options.appMessage.packetLength);
 	for (var i = 0; i < messageCount; i++)
 	{
 		appMessageQueue.push({'message': {
+			'token': token,
 			'list': List.Viewer,
 			'index': i,
 			'request': true,
-			'book': book,
-			'chapter': chapter,
 			'content': cleanString(text.substring(i * options.appMessage.packetLength, (i+1) * options.appMessage.packetLength))
 		}});
 	}
 	sendAppMessageQueue();
 }
 
-function requestVerseText(book, chapter) {
+function requestVerseText(book, chapter, token) {
 	var xhr = new XMLHttpRequest();
 	var url = "http://labs.bible.org/api/?passage="+encodeURI(book + ' ' + chapter)+"&type=json";
 	console.log("Fetching verse data from: " + url);
@@ -97,7 +97,7 @@ function requestVerseText(book, chapter) {
 					{
 						verseText += res[i].verse + ")" + res[i].text + " ";
 					}
-					sendTextForVerse(verseText, book, chapter);
+					sendTextForVerse(verseText, token);
 				} else {
 					console.log('Invalid response received! ' + JSON.stringify(xhr));
 				}
@@ -127,12 +127,13 @@ Pebble.addEventListener('appmessage', function(e) {
 	console.log('AppMessage received from Pebble: ' + JSON.stringify(e.payload));
 
 	var request = e.payload.request || '';
+	var token = e.payload.token || 0;
 	switch (request) {
 		case 'books':
-			sendBooksForTestament(e.payload.testament);
+			sendBooksForTestament(e.payload.testament, token);
 			break;
 		case 'viewer':
-			requestVerseText(e.payload.book, e.payload.chapter);
+			requestVerseText(e.payload.book, e.payload.chapter, token);
 			break;
 	}
 });
