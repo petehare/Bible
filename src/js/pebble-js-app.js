@@ -5,7 +5,7 @@ var options = {
 		maxTries: 3,
 		retryTimeout: 3000,
 		timeout: 100,
-		packetLength: 70
+		packetLength: 80
 	},
 	http: {
 		timeout: 20000
@@ -54,7 +54,6 @@ function sendAppMessageQueue(localMessageQueue) {
 function sendBooksForTestament(testament, token) {
 	var books = bible[testament];
 	for (var i = 0; i < books.length; i++) {
-		console.log('Queuing book: ' + books[i].name);
 		appMessageQueue.push({'message': {
 			'token': token,
 			'list': List.Book,
@@ -69,6 +68,7 @@ function sendBooksForTestament(testament, token) {
 }
 
 function sendTextForVerse(text, token) {
+	text = cleanString(text);
 	var messageCount = Math.ceil(text.length / options.appMessage.packetLength);
 	for (var i = 0; i < messageCount; i++)
 	{
@@ -76,7 +76,7 @@ function sendTextForVerse(text, token) {
 			'token': token,
 			'list': List.Viewer,
 			'index': i,
-			'content': cleanString(text.substring(i * options.appMessage.packetLength, (i+1) * options.appMessage.packetLength))
+			'content': text.substring(i * options.appMessage.packetLength, (i+1) * options.appMessage.packetLength)
 		}});
 	}
 	var localMessageQueue = appMessageQueue;
@@ -143,7 +143,7 @@ Pebble.addEventListener('appmessage', function(e) {
 
 function cleanString(dirtyString) {
 	dirtyString = dirtyString.replace(/<b>|<\/b>/g, "");
-	dirtyString = dirtyString.replace(/&#8211;/g, "-");
+	dirtyString = dirtyString.replace(/\&#8211;/g, "-");
 	dirtyString = dirtyString.replace(/‘|’/g, "'");
 	return dirtyString.replace(/”|“/g, '"');
 }
