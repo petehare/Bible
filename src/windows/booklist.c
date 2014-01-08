@@ -4,6 +4,7 @@
 #include "../libs/pebble-assist.h"
 #include "../common.h"
 #include "windows/chapterlist.h"
+#include "../appmessage.h"
 
 #define MAX_BOOKS 39
 
@@ -24,6 +25,7 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
 static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context);
 static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context);
 static void window_load(Window *window);
+static void window_unload(Window *window);
 
 static Window *window;
 static MenuLayer *menu_layer;
@@ -34,6 +36,7 @@ void booklist_init(TestamentType testament) {
 
   window_set_window_handlers(window, (WindowHandlers) {
 		.load = window_load,
+    .unload = window_unload,
 	});
 
 	menu_layer = menu_layer_create_fullscreen(window);
@@ -155,4 +158,8 @@ static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *c
 
 static void window_load(Window *window) {
   refresh_list();
+}
+
+static void window_unload(Window *window) {
+  cancel_request_with_token(request_token);
 }

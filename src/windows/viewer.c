@@ -2,6 +2,7 @@
 #include "booklist.h"
 #include "../libs/pebble-assist.h"
 #include "../common.h"
+#include "../appmessage.h"
 
 #define LOADING_TEXT "Loading..."
 #define PADDING 5
@@ -124,5 +125,5 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
-
+  cancel_request_with_token(request_token);
 }

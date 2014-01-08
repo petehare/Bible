@@ -10,6 +10,7 @@ static void in_received_handler(DictionaryIterator *iter, void *context);
 static void in_dropped_handler(AppMessageResult reason, void *context);
 static void out_sent_handler(DictionaryIterator *sent, void *context);
 static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context);
+void cancel_request_with_token(int token);
 
 void appmessage_init(void) {
 	app_message_open(128 /* inbound_size */, 64 /* outbound_size */);
@@ -46,4 +47,22 @@ static void out_sent_handler(DictionaryIterator *sent, void *context) {
 
 static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "Failed to send AppMessage to Pebble");
+}
+
+void cancel_request_with_token(int token) {
+  Tuplet request_tuple = TupletCString(KEY_REQUEST, "cancel");
+  Tuplet token_tuple = TupletInteger(KEY_TOKEN, token);
+
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+
+  if (iter == NULL) {
+    return;
+  }
+
+  dict_write_tuplet(iter, &request_tuple);
+  dict_write_tuplet(iter, &token_tuple);
+  dict_write_end(iter);
+
+  app_message_outbox_send();
 }
