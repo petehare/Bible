@@ -38,7 +38,7 @@ void viewer_init(Book *book, int chapter) {
 
 	scroll_layer_set_click_config_onto_window(scroll_layer, window);
   text_layer = text_layer_create(GRect(PADDING, PADDING, bounds.size.w - PADDING*2, bounds.size.h - PADDING*2));
-  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 
   scroll_layer_add_child(scroll_layer, text_layer_get_layer(text_layer));
 	layer_add_child(window_layer, scroll_layer_get_layer(scroll_layer));
