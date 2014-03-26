@@ -9,6 +9,7 @@
 
 static Book *current_book;
 static int current_chapter;
+static char *current_range;
 static int current_index;
 static int request_token;
 static char *current_text;
@@ -21,11 +22,12 @@ static Window *window;
 static ScrollLayer *scroll_layer;
 static TextLayer *text_layer;
 
-void viewer_init(Book *book, int chapter) {
+void viewer_init(Book *book, int chapter, char *range) {
 	window = window_create();
 
   current_book = book;
   current_chapter = chapter;
+  current_range = range;
 
   window_set_window_handlers(window, (WindowHandlers) {
 		.load = window_load,
@@ -93,12 +95,15 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 
 static void request_data() {
-  Tuplet request_tuple = TupletCString(KEY_REQUEST, "viewer");
+  Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeViewer);
 	Tuplet book_tuple = TupletCString(KEY_BOOK, current_book->name);
   Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
+  Tuplet range_tuple = TupletCString(KEY_RANGE, current_range);
 
   request_token = (int)time(NULL);
   Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Token being sent :%d", request_token);
 
 	DictionaryIterator *iter;
 	app_message_outbox_begin(&iter);
@@ -111,6 +116,7 @@ static void request_data() {
 	dict_write_tuplet(iter, &book_tuple);
   dict_write_tuplet(iter, &chapter_tuple);
   dict_write_tuplet(iter, &token_tuple);
+  dict_write_tuplet(iter, &range_tuple);
 	dict_write_end(iter);
 
 	app_message_outbox_send();

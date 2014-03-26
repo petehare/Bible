@@ -1,17 +1,19 @@
 #include <pebble.h>
-#include "booklist.h"
-#include "testamentlist.h"
+#include "verseslist.h"
+#include "viewer.h"
 #include "../libs/pebble-assist.h"
 #include "../common.h"
-#include "chapterlist.h"
+#include "windows/chapterlist.h"
 #include "../appmessage.h"
 
-#define MAX_BOOKS 39
+#define MAX_RANGES 6
+#define MAX_RANGE_SIZE 8
 
-static Book books[MAX_BOOKS];
+static char ranges[MAX_RANGES][MAX_RANGE_SIZE];
 
-static TestamentType current_testament;
-static int num_books;
+static Book *current_book;
+static int current_chapter;
+static int num_ranges;
 static int request_token;
 
 static void refresh_list();
@@ -30,9 +32,10 @@ static void window_unload(Window *window);
 static Window *window;
 static MenuLayer *menu_layer;
 
-void booklist_init(TestamentType testament) {
+void verseslist_init(Book *book, int chapter) {
 	window = window_create();
-  current_testament = testament;
+  current_book = book;
+  current_chapter = chapter;
 
   window_set_window_handlers(window, (WindowHandlers) {
 		.load = window_load,
@@ -56,40 +59,33 @@ void booklist_init(TestamentType testament) {
 	window_stack_push(window, true);
 }
 
-void booklist_destroy(void) {
-	chapterlist_destroy();
+void verseslist_destroy(void) {
+	viewer_destroy();
 	layer_remove_from_parent(menu_layer_get_layer(menu_layer));
 	menu_layer_destroy_safe(menu_layer);
 	window_destroy_safe(window);
 }
 
-void booklist_in_received_handler(DictionaryIterator *iter) {
+void verseslist_in_received_handler(DictionaryIterator *iter) {
+  Tuple *content_tuple = dict_find(iter, KEY_CONTENT);
   Tuple *index_tuple = dict_find(iter, KEY_INDEX);
-	Tuple *book_tuple = dict_find(iter, KEY_BOOK);
-	Tuple *chapter_tuple = dict_find(iter, KEY_CHAPTER);
   Tuple *token_tuple = dict_find(iter, KEY_TOKEN);
 
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Received %s", book_tuple->value->cstring);
-
-	if (book_tuple && chapter_tuple && token_tuple) {
+	if (content_tuple && index_tuple && token_tuple) {
     if (token_tuple->value->int32 != request_token) return;
 
-		Book book;
-    book.index = index_tuple->value->int16;
-		strncpy(book.name, book_tuple->value->cstring, sizeof(book.name));
-		book.chapters = chapter_tuple->value->int16;
-		books[book.index] = book;
-		num_books++;
+		strncpy(ranges[index_tuple->value->int16], content_tuple->value->cstring, MAX_RANGE_SIZE - 1);
+		num_ranges++;
 		menu_layer_reload_data(menu_layer);
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "Received book [%d] %s", book.index, book.name);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "Received verse range %s", ranges[index_tuple->value->int16]);
 	}
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 
 static void refresh_list() {
-	memset(books, 0x0, sizeof(books));
-	num_books = 0;
+	memset(ranges, 0x0, sizeof(ranges));
+	num_ranges = 0;
 	menu_layer_set_selected_index(menu_layer, (MenuIndex) { .row = 0, .section = 0 }, MenuRowAlignBottom, false);
 	menu_layer_reload_data(menu_layer);
 	request_data();
@@ -97,8 +93,9 @@ static void refresh_list() {
 }
 
 static void request_data() {
-  Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeBooks);
-	Tuplet testament_tuple = TupletInteger(KEY_TESTAMENT, current_testament);
+  Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeVerses);
+	Tuplet book_tuple = TupletCString(KEY_BOOK, current_book->name);
+  Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
 
   request_token = (int)time(NULL);
   Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
@@ -111,7 +108,8 @@ static void request_data() {
 	}
 
 	dict_write_tuplet(iter, &request_tuple);
-	dict_write_tuplet(iter, &testament_tuple);
+	dict_write_tuplet(iter, &book_tuple);
+  dict_write_tuplet(iter, &chapter_tuple);
   dict_write_tuplet(iter, &token_tuple);
 	dict_write_end(iter);
 
@@ -123,7 +121,7 @@ static uint16_t menu_get_num_sections_callback(struct MenuLayer *menu_layer, voi
 }
 
 static uint16_t menu_get_num_rows_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context) {
-	return (num_books) ? num_books : 1;
+	return (num_ranges) ? num_ranges : 1;
 }
 
 static int16_t menu_get_header_height_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context) {
@@ -135,23 +133,24 @@ static int16_t menu_get_cell_height_callback(struct MenuLayer *menu_layer, MenuI
 }
 
 static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *callback_context) {
-	menu_cell_basic_header_draw(ctx, cell_layer, testament_to_string(current_testament));
+	menu_cell_basic_header_draw(ctx, cell_layer, "Verse Ranges");
 }
 
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
-	if (num_books == 0) {
+	if (num_ranges == 0) {
 		menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
 	} else {
     graphics_context_set_text_color(ctx, GColorBlack);
-		graphics_draw_text(ctx, books[cell_index->row].name, fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 28 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+		graphics_draw_text(ctx, ranges[cell_index->row], fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 28 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Displaying verse range %s", ranges[cell_index->row]);
 	}
 }
 
 static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
-	if (num_books == 0) {
+	if (num_ranges == 0) {
 		return;
 	}
-  chapterlist_init(&books[cell_index->row]);
+  viewer_init(current_book, current_chapter, ranges[cell_index->row]);
 }
 
 static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {

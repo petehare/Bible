@@ -5,7 +5,8 @@ var options = {
 		maxTries: 3,
 		retryTimeout: 3000,
 		timeout: 100,
-		packetLength: 80
+		packetLength: 80,
+        verseBatch: 30
 	},
 	http: {
 		timeout: 20000
@@ -14,7 +15,15 @@ var options = {
 
 var List = {
 	Book: 0,
-	Viewer: 1
+    Verses: 1,
+	Viewer: 2
+};
+
+var Request = {
+    Books: 0,
+    Verses: 1,
+    Viewer: 2,
+    Cancel: 3
 };
 
 // bible structure
@@ -74,23 +83,55 @@ function sendBooksForTestament(testament, token) {
 	sendAppMessageQueue(token.toString());
 }
 
-function sendTextForVerse(text, token) {
-	text = cleanString(text);
-	var messageCount = Math.ceil(text.length / options.appMessage.packetLength);
-	appMessageQueues[token.toString()] = [];
-	for (var i = 0; i < messageCount; i++)
-	{
-		appMessageQueues[token.toString()].push({'message': {
-			'token': token,
-			'list': List.Viewer,
-			'index': i,
-			'content': text.substring(i * options.appMessage.packetLength, (i+1) * options.appMessage.packetLength)
-		}});
-	}
-	sendAppMessageQueue(token.toString());
+// API requests
+
+function requestVerseRanges(book, chapter, token) {
+  getVerseText(book, chapter, function(response) {
+    var batches = Math.ceil(response.length / options.appMessage.verseBatch);
+    appMessageQueues[token.toString()] = [];
+    for (var i = 0; i < batches; i++)
+    {
+     var batchName = ((i * options.appMessage.verseBatch) + 1).toString() + "-" + (Math.min((i + 1) * options.appMessage.verseBatch, response.length)).toString();
+      appMessageQueues[token.toString()].push({'message': {
+        'token': token,
+        'list': List.Verses,
+        'index': i,
+        'content': batchName
+      }});
+    }
+    sendAppMessageQueue(token.toString());
+  });
 }
 
-function requestVerseText(book, chapter, token) {
+function requestVerseText(book, chapter, rangeString, token) {
+  var range = rangeString.split("-");
+  getVerseText(book, chapter, function(response) {
+    var verseText = "";
+    for (var i in res)
+    {
+      if (parseInt(res[i].verse) >= parseInt(range[0]) && parseInt(res[i].verse) <= parseInt(range[1]))
+      {
+        verseText += res[i].verse + ") " + res[i].text + " ";
+      }
+    }
+
+    text = cleanString(verseText);
+    var messageCount = Math.ceil(text.length / options.appMessage.packetLength);
+    appMessageQueues[token.toString()] = [];
+    for (var i = 0; i < messageCount; i++)
+    {
+      appMessageQueues[token.toString()].push({'message': {
+        'token': token,
+        'list': List.Viewer,
+        'index': i,
+        'content': text.substring(i * options.appMessage.packetLength, (i+1) * options.appMessage.packetLength)
+      }});
+    }
+    sendAppMessageQueue(token.toString());
+  });
+}
+
+function getVerseText(book, chapter, completion) {
 	var xhr = new XMLHttpRequest();
 	var url = "http://labs.bible.org/api/?passage="+encodeURI(book + ' ' + chapter)+"&type=json";
 	console.log("Fetching verse data from: " + url);
@@ -101,12 +142,7 @@ function requestVerseText(book, chapter, token) {
 			if (xhr.status == 200) {
 				if (xhr.responseText) {
 					res = JSON.parse(xhr.responseText);
-					var verseText = "";
-					for (var i in res)
-					{
-						verseText += res[i].verse + ") " + res[i].text + " ";
-					}
-					sendTextForVerse(verseText, token);
+                    completion(res);
 				} else {
 					console.log('Invalid response received! ' + JSON.stringify(xhr));
 				}
@@ -135,16 +171,19 @@ Pebble.addEventListener('ready', function(e) {
 Pebble.addEventListener('appmessage', function(e) {
 	console.log('AppMessage received from Pebble: ' + JSON.stringify(e.payload));
 
-	var request = e.payload.request || '';
+	var request = e.payload.request;
 	var token = e.payload.token || 0;
 	switch (request) {
-		case 'books':
+		case Request.Books:
 			sendBooksForTestament(e.payload.testament, token);
 			break;
-		case 'viewer':
-			requestVerseText(e.payload.book, e.payload.chapter, token);
+    case Request.Verses:
+      requestVerseRanges(e.payload.book, e.payload.chapter, token);
+      break;
+		case Request.Viewer:
+			requestVerseText(e.payload.book, e.payload.chapter, e.payload.range, token);
 			break;
-		case 'cancel':
+		case Request.Cancel:
 			cancelAppMessageQueue(token);
 			break;
 	}

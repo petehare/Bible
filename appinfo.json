@@ -1,31 +1,32 @@
 {
-  "uuid": "984949d3-a991-4b1f-8ebb-3ff5867bde67",
-  "shortName": "Bible",
-  "longName": "Bible",
-  "companyName": "Pete Hare",
-  "versionCode": 1,
-  "versionLabel": "1.0.1",
-  "watchapp": {
-    "watchface": false
-  },
-  "appKeys": {
-		"list": 0,
-		"request": 1,
-		"index": 2,
-		"testament": 3,
-		"book": 4,
-		"chapter": 5,
-		"content": 6,
-		"token": 7
+    "uuid": "984949d3-a991-4b1f-8ebb-3ff5867bde67",
+    "shortName": "Bible",
+    "longName": "Bible",
+    "companyName": "Pete Hare",
+    "versionCode": 1,
+    "versionLabel": "1.0.1",
+    "watchapp": {
+        "watchface": false
+    },
+    "appKeys": {
+        "list": 0,
+        "request": 1,
+        "index": 2,
+        "testament": 3,
+        "book": 4,
+        "chapter": 5,
+        "range": 6,
+        "content": 7,
+        "token": 8
 	},
-  "resources": {
-    "media": [
-			{
-				"menuIcon": true,
-				"type": "png",
-				"name": "IMAGE_MENU_ICON",
-				"file": "images/icon.png"
-			}
-		]
-  }
+    "resources": {
+        "media": [
+                  {
+                  "menuIcon": true,
+                  "type": "png",
+                  "name": "IMAGE_MENU_ICON",
+                  "file": "images/icon.png"
+                  }
+        ]
+    }
 }

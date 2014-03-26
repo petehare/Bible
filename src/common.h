@@ -2,13 +2,21 @@
 
 typedef enum {
 	ListTypeBook = 0x0,
-  ListTypeViewer = 0x1
+  ListTypeVerses = 0x1,
+  ListTypeViewer = 0x2
 } ListType;
 
 typedef enum {
 	TestamentTypeOld = 0x0,
 	TestamentTypeNew = 0x1,
 } TestamentType;
+
+typedef enum {
+  RequestTypeBooks,
+  RequestTypeVerses,
+  RequestTypeViewer,
+  RequestTypeCancel
+} RequestType;
 
 const char* testament_to_string(TestamentType testament);
 
@@ -25,6 +33,7 @@ enum {
   KEY_TESTAMENT,
 	KEY_BOOK,
 	KEY_CHAPTER,
+  KEY_RANGE,
   KEY_CONTENT,
   KEY_TOKEN
 };

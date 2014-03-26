@@ -4,6 +4,7 @@
 #include "libs/pebble-assist.h"
 #include "windows/testamentlist.h"
 #include "windows/booklist.h"
+#include "windows/verseslist.h"
 #include "windows/viewer.h"
 
 static void in_received_handler(DictionaryIterator *iter, void *context);
@@ -13,7 +14,7 @@ static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reas
 void cancel_request_with_token(int token);
 
 void appmessage_init(void) {
-	app_message_open(128 /* inbound_size */, 64 /* outbound_size */);
+	app_message_open(128 /* inbound_size */, 128 /* outbound_size */);
 	app_message_register_inbox_received(in_received_handler);
 	app_message_register_inbox_dropped(in_dropped_handler);
 	app_message_register_outbox_sent(out_sent_handler);
@@ -29,6 +30,9 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
 		switch (list_tuple->value->int16) {
 			case ListTypeBook:
 				booklist_in_received_handler(iter);
+				break;
+      case ListTypeVerses:
+				verseslist_in_received_handler(iter);
 				break;
       case ListTypeViewer:
 				viewer_in_received_handler(iter);
@@ -50,7 +54,7 @@ static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reas
 }
 
 void cancel_request_with_token(int token) {
-  Tuplet request_tuple = TupletCString(KEY_REQUEST, "cancel");
+  Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeCancel);
   Tuplet token_tuple = TupletInteger(KEY_TOKEN, token);
 
   DictionaryIterator *iter;
