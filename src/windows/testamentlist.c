@@ -68,7 +68,7 @@ static int16_t menu_get_header_height_callback(struct MenuLayer *menu_layer, uin
 }
 
 static int16_t menu_get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
-	return MENU_CELL_BASIC_CELL_HEIGHT;
+	return 67.;
 }
 
 static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *callback_context) {
@@ -77,7 +77,7 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
 
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
   graphics_context_set_text_color(ctx, GColorBlack);
-  graphics_draw_text(ctx, testament_to_string((TestamentType)cell_index->row), fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 5 }, .size = { PEBBLE_WIDTH - 8, 24 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, testament_to_string((TestamentType)cell_index->row), fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 15. }, .size = { PEBBLE_WIDTH - 8, 30 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 }
 
 static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
