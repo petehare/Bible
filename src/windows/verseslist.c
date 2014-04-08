@@ -34,12 +34,12 @@ static MenuLayer *menu_layer;
 
 void verseslist_init(Book *book, int chapter) {
 	window = window_create();
-  current_book = book;
-  current_chapter = chapter;
+    current_book = book;
+    current_chapter = chapter;
 
-  window_set_window_handlers(window, (WindowHandlers) {
+    window_set_window_handlers(window, (WindowHandlers) {
 		.load = window_load,
-    .unload = window_unload,
+        .unload = window_unload,
 	});
 
 	menu_layer = menu_layer_create_fullscreen(window);
@@ -67,12 +67,12 @@ void verseslist_destroy(void) {
 }
 
 void verseslist_in_received_handler(DictionaryIterator *iter) {
-  Tuple *content_tuple = dict_find(iter, KEY_CONTENT);
-  Tuple *index_tuple = dict_find(iter, KEY_INDEX);
-  Tuple *token_tuple = dict_find(iter, KEY_TOKEN);
+    Tuple *content_tuple = dict_find(iter, KEY_CONTENT);
+    Tuple *index_tuple = dict_find(iter, KEY_INDEX);
+    Tuple *token_tuple = dict_find(iter, KEY_TOKEN);
 
 	if (content_tuple && index_tuple && token_tuple) {
-    if (token_tuple->value->int32 != request_token) return;
+        if (token_tuple->value->int32 != request_token) return;
 
 		strncpy(ranges[index_tuple->value->int16], content_tuple->value->cstring, MAX_RANGE_SIZE - 1);
 		num_ranges++;
@@ -93,12 +93,12 @@ static void refresh_list() {
 }
 
 static void request_data() {
-  Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeVerses);
-	Tuplet book_tuple = TupletCString(KEY_BOOK, current_book->name);
-  Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
+    Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeVerses);
+    Tuplet book_tuple = TupletCString(KEY_BOOK, current_book->name);
+    Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
 
-  request_token = (int)time(NULL);
-  Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
+    request_token = (int)time(NULL);
+    Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
 
 	DictionaryIterator *iter;
 	app_message_outbox_begin(&iter);
@@ -109,8 +109,8 @@ static void request_data() {
 
 	dict_write_tuplet(iter, &request_tuple);
 	dict_write_tuplet(iter, &book_tuple);
-  dict_write_tuplet(iter, &chapter_tuple);
-  dict_write_tuplet(iter, &token_tuple);
+    dict_write_tuplet(iter, &chapter_tuple);
+    dict_write_tuplet(iter, &token_tuple);
 	dict_write_end(iter);
 
 	app_message_outbox_send();
@@ -140,9 +140,9 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
 	if (num_ranges == 0) {
 		menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
 	} else {
-    graphics_context_set_text_color(ctx, GColorBlack);
+        graphics_context_set_text_color(ctx, GColorBlack);
 		graphics_draw_text(ctx, ranges[cell_index->row], fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 28 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Displaying verse range %s", ranges[cell_index->row]);
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Displaying verse range %s", ranges[cell_index->row]);
 	}
 }
 
@@ -150,7 +150,7 @@ static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_i
 	if (num_ranges == 0) {
 		return;
 	}
-  viewer_init(current_book, current_chapter, ranges[cell_index->row]);
+    viewer_init(current_book, current_chapter, ranges[cell_index->row]);
 }
 
 static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
@@ -158,9 +158,9 @@ static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *c
 }
 
 static void window_load(Window *window) {
-  refresh_list();
+    refresh_list();
 }
 
 static void window_unload(Window *window) {
-  cancel_request_with_token(request_token);
+    cancel_request_with_token(request_token);
 }
