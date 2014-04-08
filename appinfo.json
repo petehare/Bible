@@ -3,8 +3,8 @@
     "shortName": "Bible",
     "longName": "Bible",
     "companyName": "Pete Hare",
-    "versionCode": 2,
-    "versionLabel": "1.0.2",
+    "versionCode": 3,
+    "versionLabel": "1.0.4",
     "watchapp": {
         "watchface": false
     },
