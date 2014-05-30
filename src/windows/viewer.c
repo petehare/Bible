@@ -25,24 +25,24 @@ static TextLayer *text_layer;
 void viewer_init(Book *book, int chapter, char *range) {
 	window = window_create();
 
-  current_book = book;
-  current_chapter = chapter;
-  current_range = range;
+    current_book = book;
+    current_chapter = chapter;
+    current_range = range;
 
-  window_set_window_handlers(window, (WindowHandlers) {
+    window_set_window_handlers(window, (WindowHandlers) {
 		.load = window_load,
-    .unload = window_unload,
+        .unload = window_unload,
 	});
 
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_frame(window_layer);
+    Layer *window_layer = window_get_root_layer(window);
+    GRect bounds = layer_get_frame(window_layer);
 	scroll_layer = scroll_layer_create(bounds);
 
 	scroll_layer_set_click_config_onto_window(scroll_layer, window);
-  text_layer = text_layer_create(GRect(PADDING, PADDING, bounds.size.w - PADDING*2, bounds.size.h - PADDING*2));
-  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+    text_layer = text_layer_create(GRect(PADDING, PADDING, bounds.size.w - PADDING*2, bounds.size.h - PADDING*2));
+    text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 
-  scroll_layer_add_child(scroll_layer, text_layer_get_layer(text_layer));
+    scroll_layer_add_child(scroll_layer, text_layer_get_layer(text_layer));
 	layer_add_child(window_layer, scroll_layer_get_layer(scroll_layer));
 
 	window_stack_push(window, true);
@@ -55,38 +55,44 @@ void viewer_destroy(void) {
 }
 
 void viewer_in_received_handler(DictionaryIterator *iter) {
+
 	Tuple *content_tuple = dict_find(iter, KEY_CONTENT);
-  Tuple *index_tuple = dict_find(iter, KEY_INDEX);
-  Tuple *token_tuple = dict_find(iter, KEY_TOKEN);
+    Tuple *index_tuple = dict_find(iter, KEY_INDEX);
+    Tuple *token_tuple = dict_find(iter, KEY_TOKEN);
 
 	if (content_tuple && index_tuple && token_tuple) {
-    if (token_tuple->value->int32 != request_token) return;
-    if (index_tuple->value->int16 <= current_index) return;
-    current_index = index_tuple->value->int16;
+        if (token_tuple->value->int32 != request_token) return;
+        if (index_tuple->value->int16 <= current_index) return;
+        current_index = index_tuple->value->int16;
 
-    Layer *window_layer = window_get_root_layer(window);
-    GRect bounds = layer_get_frame(window_layer);
-    text_layer_set_size(text_layer, GSize(bounds.size.w - PADDING*2, 9999));
+        Layer *window_layer = window_get_root_layer(window);
+        GRect bounds = layer_get_frame(window_layer);
+        text_layer_set_size(text_layer, GSize(bounds.size.w - PADDING*2, 9999));
 
-    char *additional_text = content_tuple->value->cstring;
-    char *new_text;
-    if (strcmp(current_text, LOADING_TEXT) == 0)
-    {
-      new_text = malloc(strlen(additional_text) + 1);
-      strcpy(new_text, additional_text);
-    }
-    else
-    {
-      new_text = malloc((strlen(current_text) + strlen(additional_text) + 1));
-      strcpy(new_text, current_text);
-      strcat(new_text, additional_text);
-    }
-    free(current_text);
-    current_text = new_text;
-    text_layer_set_text(text_layer, current_text);
-    GSize max_size = text_layer_get_content_size(text_layer);
-    text_layer_set_size(text_layer, max_size);
-    scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h + PADDING*2));
+        char *additional_text = content_tuple->value->cstring;
+        char *new_text;
+        if (strcmp(current_text, LOADING_TEXT) == 0)
+        {
+            new_text = malloc(strlen(additional_text) + 1);
+            strcpy(new_text, additional_text);
+            current_text = NULL;
+        }
+        else
+        {
+            new_text = malloc((strlen(current_text) + strlen(additional_text) + 1));
+            strcpy(new_text, current_text);
+            strcat(new_text, additional_text);
+        }
+        if (NULL != current_text )
+        {
+            free(current_text);
+            current_text = NULL;
+        }
+        current_text = new_text;
+        text_layer_set_text(text_layer, current_text);
+        GSize max_size = text_layer_get_content_size(text_layer);
+        text_layer_set_size(text_layer, max_size);
+        scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h + PADDING*2));
 
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "received content for chapter [%d] %s", current_chapter, current_book->name);
 	}
@@ -95,15 +101,15 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 
 static void request_data() {
-  Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeViewer);
+    Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeViewer);
 	Tuplet book_tuple = TupletCString(KEY_BOOK, current_book->name);
-  Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
-  Tuplet range_tuple = TupletCString(KEY_RANGE, current_range);
+    Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
+    Tuplet range_tuple = TupletCString(KEY_RANGE, current_range);
 
-  request_token = (int)time(NULL);
-  Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
+    request_token = (int)time(NULL);
+    Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
 
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Token being sent :%d", request_token);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Token being sent :%d", request_token);
 
 	DictionaryIterator *iter;
 	app_message_outbox_begin(&iter);
@@ -114,24 +120,24 @@ static void request_data() {
 
 	dict_write_tuplet(iter, &request_tuple);
 	dict_write_tuplet(iter, &book_tuple);
-  dict_write_tuplet(iter, &chapter_tuple);
-  dict_write_tuplet(iter, &token_tuple);
-  dict_write_tuplet(iter, &range_tuple);
+    dict_write_tuplet(iter, &chapter_tuple);
+    dict_write_tuplet(iter, &token_tuple);
+    dict_write_tuplet(iter, &range_tuple);
 	dict_write_end(iter);
 
 	app_message_outbox_send();
 }
 
 static void window_load(Window *window) {
-  current_text = LOADING_TEXT;
-  current_index = -1;
-  text_layer_set_text(text_layer, current_text);
-  request_data();
+    current_text = LOADING_TEXT;
+    current_index = -1;
+    text_layer_set_text(text_layer, current_text);
+    request_data();
 }
 
 static void window_unload(Window *window) {
-  free(current_text);
-  current_text = NULL;
-  cancel_request_with_token(request_token);
-  request_token = 0;
+    free(current_text);
+    current_text = NULL;
+    cancel_request_with_token(request_token);
+    request_token = 0;
 }

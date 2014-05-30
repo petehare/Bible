@@ -142,7 +142,6 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
 	} else {
         graphics_context_set_text_color(ctx, GColorBlack);
 		graphics_draw_text(ctx, ranges[cell_index->row], fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 28 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Displaying verse range %s", ranges[cell_index->row]);
 	}
 }
 
