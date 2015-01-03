@@ -109,11 +109,11 @@ function requestVerseText(book, chapter, rangeString, token) {
   var range = rangeString.split("-");
   getVerseText(book, chapter, function(response) {
     var verseText = "";
-    for (var i in res)
+    for (var i in response)
     {
-      if (parseInt(res[i].verse) >= parseInt(range[0]) && parseInt(res[i].verse) <= parseInt(range[1]))
+      if (parseInt(response[i].verse) >= parseInt(range[0]) && parseInt(response[i].verse) <= parseInt(range[1]))
       {
-        verseText += res[i].verse + ") " + res[i].text + " ";
+        verseText += response[i].verse + ") " + response[i].text + " ";
       }
     }
 
@@ -150,7 +150,7 @@ function getVerseText(book, chapter, completion) {
 		if (xhr.readyState == 4) {
 			if (xhr.status == 200) {
 				if (xhr.responseText) {
-					res = JSON.parse(xhr.responseText);
+					var res = JSON.parse(xhr.responseText);
                     bibleCache[book+chapter] = res;
                     completion(res);
 				} else {
