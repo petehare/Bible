@@ -90,7 +90,7 @@ function FavoriteList() {
         var jsonFavorites = [];
         for (var i = 0; i < this.favorites.length; i++) {
             var favorite = this.favorites[i];
-            jsonFavorites.push(favorite.asJSONObject);
+            jsonFavorites.push(favorite.asJSONObject());
         }
         localStorage.setItem('favoriteList', JSON.stringify(jsonFavorites));
     };
