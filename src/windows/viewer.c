@@ -15,6 +15,9 @@ static int request_token;
 static char *current_text;
 
 static void request_data();
+static void add_favorite();
+static void click_config_provider(Window *window);
+static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context);
 static void window_load(Window *window);
 static void window_unload(Window *window);
 
@@ -39,6 +42,10 @@ void viewer_init(Book *book, int chapter, char *range) {
 	scroll_layer = scroll_layer_create(bounds);
 
 	scroll_layer_set_click_config_onto_window(scroll_layer, window);
+    scroll_layer_set_callbacks(scroll_layer, (ScrollLayerCallbacks) {
+        .click_config_provider = (ClickConfigProvider) click_config_provider
+    });
+    
     text_layer = text_layer_create(GRect(PADDING, PADDING, bounds.size.w - PADDING*2, bounds.size.h - PADDING*2));
     text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 
@@ -127,6 +134,47 @@ static void request_data() {
 
 	app_message_outbox_send();
 }
+
+static void add_favorite() {
+    Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeUpdateFavorite);
+    Tuplet book_tuple = TupletCString(KEY_BOOK, current_book->name);
+    Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
+    Tuplet range_tuple = TupletCString(KEY_RANGE, current_range);
+    Tuplet add_favorite_tuple = TupletInteger(KEY_ADDFAVORITE, 1);
+    
+    request_token = (int)time(NULL);
+    Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
+    
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Token being sent :%d", request_token);
+    
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+    
+    if (iter == NULL) {
+        return;
+    }
+    
+    dict_write_tuplet(iter, &request_tuple);
+    dict_write_tuplet(iter, &book_tuple);
+    dict_write_tuplet(iter, &chapter_tuple);
+    dict_write_tuplet(iter, &token_tuple);
+    dict_write_tuplet(iter, &range_tuple);
+    dict_write_tuplet(iter, &add_favorite_tuple);
+    dict_write_end(iter);
+    
+    app_message_outbox_send();
+
+}
+
+static void click_config_provider(Window *window) {
+    window_multi_click_subscribe(BUTTON_ID_SELECT, 2, 0, 0, true, select_multi_click_handler);
+}
+
+static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Douple tap detected");
+    add_favorite();
+}
+
 
 static void window_load(Window *window) {
     current_text = LOADING_TEXT;

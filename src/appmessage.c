@@ -5,6 +5,7 @@
 #include "windows/testamentlist.h"
 #include "windows/booklist.h"
 #include "windows/verseslist.h"
+#include "windows/favoriteslist.h"
 #include "windows/viewer.h"
 
 static void in_received_handler(DictionaryIterator *iter, void *context);
@@ -27,18 +28,21 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
 	Tuple *list_tuple = dict_find(iter, KEY_LIST);
 
 	if (list_tuple) {
-		switch (list_tuple->value->int16) {
-			case ListTypeBook:
-				booklist_in_received_handler(iter);
-				break;
-      case ListTypeVerses:
-				verseslist_in_received_handler(iter);
-				break;
-      case ListTypeViewer:
-				viewer_in_received_handler(iter);
-				break;
-		}
-	}
+        switch (list_tuple->value->int16) {
+            case ListTypeBook:
+                booklist_in_received_handler(iter);
+                break;
+            case ListTypeVerses:
+                verseslist_in_received_handler(iter);
+                break;
+            case ListTypeViewer:
+                viewer_in_received_handler(iter);
+                break;
+            case ListTypeFavorites:
+                favoriteslist_in_received_handler(iter);
+                break;
+        }
+    }
 }
 
 static void in_dropped_handler(AppMessageResult reason, void *context) {

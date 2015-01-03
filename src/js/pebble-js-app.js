@@ -154,7 +154,11 @@ function requestVerseText(book, chapter, rangeString, token) {
   });
 }
 
-function updateFavorite(book, chapter, rangeString, rangeIndex, addFavorite, token) {
+function updateFavorite(book, chapter, range, addFavorite, token) {
+    if (favorites == null)
+    {
+        favorites = [];
+    }
     if (addFavorite)
     {
         var newFavorite = {book: book, chapter: chapter, range: range};
@@ -246,7 +250,7 @@ Pebble.addEventListener('appmessage', function(e) {
             requestFavorites(token);
             break;
         case Request.UpdateFavorite:
-            updateFavorite(e.payload.book, e.payload.chapter, e.payload.content, e.payload.range, e.payload.addFavorite, token);
+            updateFavorite(e.payload.book, e.payload.chapter, e.payload.range, e.payload.addFavorite, token);
             break;
 	}
 });
