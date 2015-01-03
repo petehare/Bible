@@ -111,14 +111,14 @@ function requestVerseRanges(book, chapter, token) {
 
 function requestFavorites(token) {
     appMessageQueues[token.toString()] = [];
-    for (var i = 0; i < favorites; i++)
+    for (var i = 0; i < favorites.length; i++)
     {
         var favorite = favorites[i];
         appMessageQueues[token.toString()].push({'message': {
             'token': token,
             'list': List.Favorites,
             'index': i,
-            'book': books[favorite.book].name,
+            'book': favorite.book,
             'chapter': favorite.chapter,
             'range': favorite.range,
         }});
@@ -162,6 +162,7 @@ function updateFavorite(book, chapter, range, addFavorite, token) {
     if (addFavorite)
     {
         var newFavorite = {book: book, chapter: chapter, range: range};
+        console.log('Adding new favorite: ' + JSON.stringify(newFavorite));
         favorites.push(newFavorite);
         window.localStorage.setItem('favorites', JSON.stringify(favorites));
         return;

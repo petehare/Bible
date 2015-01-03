@@ -30,7 +30,7 @@ typedef struct {
 } Book;
 
 typedef struct {
-    Book *book;
+    Book book;
     int chapter;
     char range[8];
 } Favorite;

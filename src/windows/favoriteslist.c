@@ -77,12 +77,11 @@ void favoriteslist_in_received_handler(DictionaryIterator *iter) {
         
         Book book;
         strncpy(book.name, book_tuple->value->cstring, sizeof(book.name));
-        favorite.book = &book;
+        favorite.book = book;
         
         favorites[index_tuple->value->int16] = favorite;
         num_favorites++;
         menu_layer_reload_data(menu_layer);
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Received favorite %s", favorite.book->name);
     }
 }
 
@@ -138,16 +137,14 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
 }
 
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Displaying favorite for a book");
     if (num_favorites == 0) {
         menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
     } else {
         Favorite favorite = favorites[cell_index->row];
 
-        char *title;
-        size_t titleSize;
-        titleSize = snprintf(NULL, 0, "%s %d:%s", favorite.book->name, favorite.chapter, favorite.range);
-        title = (char *)malloc(titleSize + 1);
-        snprintf(title, titleSize + 1, "%s %d:%s", favorite.book->name, favorite.chapter, favorite.range);
+        static char title[40];
+        snprintf(title, sizeof(title), "%s %d:%s", favorite.book.name, favorite.chapter, favorite.range);;
         
         graphics_context_set_text_color(ctx, GColorBlack);
         graphics_draw_text(ctx, title, fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 28 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
@@ -159,7 +156,7 @@ static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_i
         return;
     }
     Favorite favorite = favorites[cell_index->row];
-    viewer_init(favorite.book, favorite.chapter, favorite.range);
+    viewer_init(&favorite.book, favorite.chapter, favorite.range);
 }
 
 static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
