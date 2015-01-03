@@ -23,7 +23,9 @@ var Request = {
     Books: 0,
     Verses: 1,
     Viewer: 2,
-    Cancel: 3
+    Cancel: 3,
+    Favorites: 4,
+    UpdateFavorite: 5
 };
 
 // Bible structure
@@ -32,6 +34,7 @@ bible.push([{"name":"Genesis","chapters":50},{"name":"Exodus","chapters":40},{"n
 bible.push([{"name":"Matthew","chapters":28},{"name":"Mark","chapters":16},{"name":"Luke","chapters":24},{"name":"John","chapters":21},{"name":"Acts","chapters":28},{"name":"Romans","chapters":16},{"name":"1 Corinthians","chapters":16},{"name":"2 Corinthians","chapters":13},{"name":"Galatians","chapters":6},{"name":"Ephesians","chapters":6},{"name":"Philippians","chapters":4},{"name":"Colossians","chapters":4},{"name":"1 Thessalonians","chapters":5},{"name":"2 Thessalonians","chapters":3},{"name":"1 Timothy","chapters":6},{"name":"2 Timothy","chapters":4},{"name":"Titus","chapters":3},{"name":"Philemon","chapters":1},{"name":"Hebrews","chapters":13},{"name":"James","chapters":5},{"name":"1 Peter","chapters":5},{"name":"2 Peter","chapters":3},{"name":"1 John","chapters":5},{"name":"2 John","chapters":1},{"name":"3 John","chapters":1},{"name":"Jude","chapters":1},{"name":"Revelation","chapters":22}]);
 
 var bibleCache = {};
+var favorites = JSON.parse(localStorage.getItem('favorites')) || null;
 
 function sendAppMessageQueue(token) {
 	if (typeof appMessageQueues[token] != 'undefined' && appMessageQueues[token].length > 0) {
@@ -133,6 +136,31 @@ function requestVerseText(book, chapter, rangeString, token) {
   });
 }
 
+function updateFavorite(book, chapter, rangeString, addFavorite, token) {
+    if (addFavorite)
+    {
+        var newFavorite = {book: book, chapter: chapter: rangeString};
+        favorites.push(newFavorite);
+        window.localStorage.setItem('favorites', JSON.stringify(favorites));
+        return;
+    }
+    
+    var favoriteIndex;
+    for (var i = 0; i < favorites.length; i++)
+    {
+        var favorite = favorites[i];
+        if (favorite.book != book) continue;
+        if (favorite.chapter != chapter) continue;
+        if (favorite.rangeString != rangeString) continue;
+        
+        favoriteIndex = i;
+        break;
+    }
+    
+    favorites.splice(favoriteIndex, 1);
+    window.localStorage.setItem('favorites', JSON.stringify(favorites));
+}
+
 function getVerseText(book, chapter, completion) {
 
     if (bibleCache.hasOwnProperty(book+chapter))
@@ -187,15 +215,18 @@ Pebble.addEventListener('appmessage', function(e) {
 		case Request.Books:
 			sendBooksForTestament(e.payload.testament, token);
 			break;
-    case Request.Verses:
-      requestVerseRanges(e.payload.book, e.payload.chapter, token);
-      break;
+        case Request.Verses:
+            requestVerseRanges(e.payload.book, e.payload.chapter, token);
+            break;
 		case Request.Viewer:
 			requestVerseText(e.payload.book, e.payload.chapter, e.payload.range, token);
 			break;
 		case Request.Cancel:
 			cancelAppMessageQueue(token);
 			break;
+        case Request.UpdateFavorite:
+            updateFavorite(e.payload.book, e.payload.chapter, e.payload.range, e.payload.addFavorite, token);
+            break;
 	}
 });
 

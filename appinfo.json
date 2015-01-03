@@ -17,7 +17,8 @@
         "chapter": 5,
         "range": 6,
         "content": 7,
-        "token": 8
+        "addFavorite": 8,
+        "token": 9
 	},
     "resources": {
         "media": [
