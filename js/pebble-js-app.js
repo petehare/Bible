@@ -160,10 +160,10 @@ function toggleFavorite(book, chapter, range, token) {
     
     if (favoriteList.contains(favorite)) {
         favoriteList.remove(favorite);
-        console.log('Favorite removed: ' + JSON.stringify(favorite));
+        Pebble.showSimpleNotificationOnPebble("Favorite Removed", book + " " + chapter + ":" + range + " was removed from your favorites");
     } else {
         favoriteList.add(favorite);
-        console.log('Favorite added: ' + JSON.stringify(favorite));
+        Pebble.showSimpleNotificationOnPebble("Favorite Added", book + " " + chapter + ":" + range + " was added to your favorites");
     }
     favoriteList.save();
 }
