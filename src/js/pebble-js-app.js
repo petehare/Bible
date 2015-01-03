@@ -120,7 +120,7 @@ function requestFavorites(token) {
             'index': i,
             'book': books[favorite.book].name,
             'chapter': favorite.chapter,
-            'content': favorite.rangeString
+            'range': favorite.range,
         }});
     }
     sendAppMessageQueue(token.toString());
@@ -154,10 +154,10 @@ function requestVerseText(book, chapter, rangeString, token) {
   });
 }
 
-function updateFavorite(book, chapter, rangeString, addFavorite, token) {
+function updateFavorite(book, chapter, rangeString, rangeIndex, addFavorite, token) {
     if (addFavorite)
     {
-        var newFavorite = {book: book, chapter: chapter, rangeString: rangeString};
+        var newFavorite = {book: book, chapter: chapter, range: range};
         favorites.push(newFavorite);
         window.localStorage.setItem('favorites', JSON.stringify(favorites));
         return;
@@ -169,7 +169,7 @@ function updateFavorite(book, chapter, rangeString, addFavorite, token) {
         var favorite = favorites[i];
         if (favorite.book != book) continue;
         if (favorite.chapter != chapter) continue;
-        if (favorite.rangeString != rangeString) continue;
+        if (favorite.range != range) continue;
         
         favoriteIndex = i;
         break;
@@ -246,7 +246,7 @@ Pebble.addEventListener('appmessage', function(e) {
             requestFavorites(token);
             break;
         case Request.UpdateFavorite:
-            updateFavorite(e.payload.book, e.payload.chapter, e.payload.range, e.payload.addFavorite, token);
+            updateFavorite(e.payload.book, e.payload.chapter, e.payload.content, e.payload.range, e.payload.addFavorite, token);
             break;
 	}
 });

@@ -29,6 +29,12 @@ typedef struct {
     int chapters;
 } Book;
 
+typedef struct {
+    Book *book;
+    int chapter;
+    char range[8];
+} Favorite;
+
 enum {
     KEY_LIST,
     KEY_REQUEST,
