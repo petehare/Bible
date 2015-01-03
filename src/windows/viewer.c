@@ -15,7 +15,7 @@ static int request_token;
 static char *current_text;
 
 static void request_data();
-static void add_favorite();
+static void toggle_favorite();
 static void click_config_provider(Window *window);
 static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context);
 static void window_load(Window *window);
@@ -135,12 +135,11 @@ static void request_data() {
 	app_message_outbox_send();
 }
 
-static void add_favorite() {
-    Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeUpdateFavorite);
+static void toggle_favorite() {
+    Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeToggleFavorite);
     Tuplet book_tuple = TupletCString(KEY_BOOK, current_book->name);
     Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
     Tuplet range_tuple = TupletCString(KEY_RANGE, current_range);
-    Tuplet add_favorite_tuple = TupletInteger(KEY_ADDFAVORITE, 1);
     
     request_token = (int)time(NULL);
     Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
@@ -159,7 +158,6 @@ static void add_favorite() {
     dict_write_tuplet(iter, &chapter_tuple);
     dict_write_tuplet(iter, &token_tuple);
     dict_write_tuplet(iter, &range_tuple);
-    dict_write_tuplet(iter, &add_favorite_tuple);
     dict_write_end(iter);
     
     app_message_outbox_send();
@@ -171,8 +169,7 @@ static void click_config_provider(Window *window) {
 }
 
 static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Douple tap detected");
-    add_favorite();
+    toggle_favorite();
 }
 
 

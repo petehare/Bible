@@ -26,7 +26,7 @@ var Request = {
     Viewer: 2,
     Cancel: 3,
     Favorites: 4,
-    UpdateFavorite: 5
+    ToggleFavorite: 5
 };
 
 // Bible structure
@@ -154,7 +154,7 @@ function requestVerseText(book, chapter, rangeString, token) {
   });
 }
 
-function updateFavorite(book, chapter, range, addFavorite, token) {
+function toggleFavorite(book, chapter, range, token) {
     if (favorites == null)
     {
         favorites = [];
@@ -250,8 +250,8 @@ Pebble.addEventListener('appmessage', function(e) {
         case Request.Favorites:
             requestFavorites(token);
             break;
-        case Request.UpdateFavorite:
-            updateFavorite(e.payload.book, e.payload.chapter, e.payload.range, e.payload.addFavorite, token);
+        case Request.ToggleFavorite:
+            toggleFavorite(e.payload.book, e.payload.chapter, e.payload.range, token);
             break;
 	}
 });

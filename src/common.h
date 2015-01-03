@@ -18,7 +18,7 @@ typedef enum {
     RequestTypeViewer,
     RequestTypeCancel,
     RequestTypeFavorites,
-    RequestTypeUpdateFavorite
+    RequestTypeToggleFavorite
 } RequestType;
 
 const char* testament_to_string(TestamentType testament);
@@ -44,6 +44,5 @@ enum {
     KEY_CHAPTER,
     KEY_RANGE,
     KEY_CONTENT,
-    KEY_ADDFAVORITE,
     KEY_TOKEN
 };
