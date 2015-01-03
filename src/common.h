@@ -3,7 +3,8 @@
 typedef enum {
     ListTypeBook = 0x0,
     ListTypeVerses = 0x1,
-    ListTypeViewer = 0x2
+    ListTypeFavorites = 0x2,
+    ListTypeViewer = 0x3
 } ListType;
 
 typedef enum {

@@ -16,7 +16,8 @@ var options = {
 var List = {
 	Book: 0,
     Verses: 1,
-	Viewer: 2
+    Favorites: 2,
+	Viewer: 3
 };
 
 var Request = {
@@ -108,6 +109,23 @@ function requestVerseRanges(book, chapter, token) {
   });
 }
 
+function requestFavorites(token) {
+    appMessageQueues[token.toString()] = [];
+    for (var i = 0; i < favorites; i++)
+    {
+        var favorite = favorites[i];
+        appMessageQueues[token.toString()].push({'message': {
+            'token': token,
+            'list': List.Favorites,
+            'index': i,
+            'book': books[favorite.book].name,
+            'chapter': favorite.chapter,
+            'content': favorite.rangeString
+        }});
+    }
+    sendAppMessageQueue(token.toString());
+}
+
 function requestVerseText(book, chapter, rangeString, token) {
   var range = rangeString.split("-");
   getVerseText(book, chapter, function(response) {
@@ -139,7 +157,7 @@ function requestVerseText(book, chapter, rangeString, token) {
 function updateFavorite(book, chapter, rangeString, addFavorite, token) {
     if (addFavorite)
     {
-        var newFavorite = {book: book, chapter: chapter: rangeString};
+        var newFavorite = {book: book, chapter: chapter, rangeString: rangeString};
         favorites.push(newFavorite);
         window.localStorage.setItem('favorites', JSON.stringify(favorites));
         return;
@@ -224,6 +242,9 @@ Pebble.addEventListener('appmessage', function(e) {
 		case Request.Cancel:
 			cancelAppMessageQueue(token);
 			break;
+        case Request.Favorites:
+            requestFavorites(token);
+            break;
         case Request.UpdateFavorite:
             updateFavorite(e.payload.book, e.payload.chapter, e.payload.range, e.payload.addFavorite, token);
             break;
