@@ -141,13 +141,13 @@ function requestVerseText(book, chapter, rangeString, token) {
     text = cleanString(verseText);
     var messageCount = Math.ceil(text.length / options.appMessage.packetLength);
     appMessageQueues[token.toString()] = [];
-    for (var i = 0; i < messageCount; i++)
+    for (var j = 0; j < messageCount; j++)
     {
       appMessageQueues[token.toString()].push({'message': {
         'token': token,
         'list': List.Viewer,
-        'index': i,
-        'content': text.substring(i * options.appMessage.packetLength, (i+1) * options.appMessage.packetLength)
+        'index': j,
+        'content': text.substring(j * options.appMessage.packetLength, (j+1) * options.appMessage.packetLength)
       }});
     }
     sendAppMessageQueue(token.toString());
@@ -155,7 +155,7 @@ function requestVerseText(book, chapter, rangeString, token) {
 }
 
 function toggleFavorite(book, chapter, range, token) {
-    if (favorites == null)
+    if (favorites === null)
     {
         favorites = [];
     }
