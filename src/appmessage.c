@@ -54,7 +54,7 @@ static void out_sent_handler(DictionaryIterator *sent, void *context) {
 }
 
 static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Failed to send AppMessage to Pebble");
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Failed to send AppMessage to Pebble, %d", reason);
 }
 
 void cancel_request_with_token(int token) {

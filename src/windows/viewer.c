@@ -14,10 +14,12 @@ static int current_index;
 static int request_token;
 static char *current_text;
 
+static void set_current_text(char *text);
 static void request_data();
 static void toggle_favorite();
 static void click_config_provider(Window *window);
 static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context);
+static void select_long_click_handler(ClickRecognizerRef recognizer, void *context);
 static void window_load(Window *window);
 static void window_unload(Window *window);
 
@@ -72,10 +74,6 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
         if (index_tuple->value->int16 <= current_index) return;
         current_index = index_tuple->value->int16;
 
-        Layer *window_layer = window_get_root_layer(window);
-        GRect bounds = layer_get_frame(window_layer);
-        text_layer_set_size(text_layer, GSize(bounds.size.w - PADDING*2, 9999));
-
         char *additional_text = content_tuple->value->cstring;
         char *new_text;
         if (strcmp(current_text, LOADING_TEXT) == 0)
@@ -95,17 +93,34 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
             free(current_text);
             current_text = NULL;
         }
-        current_text = new_text;
-        text_layer_set_text(text_layer, current_text);
-        GSize max_size = text_layer_get_content_size(text_layer);
-        text_layer_set_size(text_layer, max_size);
-        scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h + PADDING*2));
-
+        set_current_text(new_text);
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "received content for chapter [%d] %s", current_chapter, current_book->name);
 	}
 }
 
+static void set_current_text(char *text) {
+    Layer *window_layer = window_get_root_layer(window);
+    GRect bounds = layer_get_frame(window_layer);
+    text_layer_set_size(text_layer, GSize(bounds.size.w - PADDING*2, 9999));
+    
+    current_text = text;
+    text_layer_set_text(text_layer, current_text);
+    GSize max_size = text_layer_get_content_size(text_layer);
+    text_layer_set_size(text_layer, max_size);
+    scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h + PADDING*2));
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
+
+static void refresh_viewer() {
+    cancel_request_with_token(request_token);
+    request_token = 0;
+    free(current_text);
+    
+    set_current_text(LOADING_TEXT);
+    current_index = -1;
+    request_data();
+}
 
 static void request_data() {
     Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeViewer);
@@ -117,7 +132,9 @@ static void request_data() {
     Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
 
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Token being sent :%d", request_token);
-
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Book: %s, Chapter: %d, Range: %s", current_book->name, current_chapter, current_range);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Range pointer: %p", current_range);
+    
 	DictionaryIterator *iter;
 	app_message_outbox_begin(&iter);
 
@@ -145,6 +162,8 @@ static void toggle_favorite() {
     Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
     
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Token being sent :%d", request_token);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Book: %s, Chapter: %d, Range: %s", current_book->name, current_chapter, current_range);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Range pointer: %p", current_range);
     
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
@@ -166,12 +185,16 @@ static void toggle_favorite() {
 
 static void click_config_provider(Window *window) {
     window_multi_click_subscribe(BUTTON_ID_SELECT, 2, 0, 0, true, select_multi_click_handler);
+    window_long_click_subscribe(BUTTON_ID_SELECT, 0, select_long_click_handler, NULL);
 }
 
 static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context) {
     toggle_favorite();
 }
 
+static void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
+    refresh_viewer();
+}
 
 static void window_load(Window *window) {
     current_text = LOADING_TEXT;
@@ -181,8 +204,8 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
-    free(current_text);
-    current_text = NULL;
     cancel_request_with_token(request_token);
     request_token = 0;
+    free(current_text);
+    current_text = NULL;
 }
