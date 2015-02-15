@@ -22,7 +22,7 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context);
 static void menu_select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context);
 static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context);
-static void window_load(Window *window);
+static void window_appear(Window *window);
 static void window_unload(Window *window);
 
 static Window *window;
@@ -32,7 +32,7 @@ void favoriteslist_init() {
     window = window_create();
     
     window_set_window_handlers(window, (WindowHandlers) {
-        .load = window_load,
+        .appear = window_appear,
         .unload = window_unload,
     });
     
@@ -163,7 +163,7 @@ static void menu_select_long_callback(struct MenuLayer *menu_layer, MenuIndex *c
     refresh_list();
 }
 
-static void window_load(Window *window) {
+static void window_appear(Window *window) {
     refresh_list();
 }
 
