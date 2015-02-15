@@ -129,6 +129,7 @@ static int16_t menu_get_header_height_callback(struct MenuLayer *menu_layer, uin
 }
 
 static int16_t menu_get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
+    if (num_favorites == 0) return 86;
     return 34;
 }
 
@@ -139,7 +140,8 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Displaying favorite for a book");
     if (num_favorites == 0) {
-        menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
+        graphics_context_set_text_color(ctx, GColorBlack);
+        graphics_draw_text(ctx, "Double tap the “Select” button while reading to add or remove favorites", fonts_get_system_font(FONT_KEY_GOTHIC_18), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 16, 80 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
     } else {
         Favorite favorite = favorites[cell_index->row];
 

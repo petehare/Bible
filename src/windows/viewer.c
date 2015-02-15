@@ -19,7 +19,6 @@ static void request_data();
 static void toggle_favorite();
 static void click_config_provider(Window *window);
 static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context);
-static void select_long_click_handler(ClickRecognizerRef recognizer, void *context);
 static void window_load(Window *window);
 static void window_unload(Window *window);
 
@@ -114,16 +113,6 @@ static void set_current_text(char *text) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 
-static void refresh_viewer() {
-    cancel_request_with_token(request_token);
-    request_token = 0;
-    free(current_text);
-    
-    set_current_text(LOADING_TEXT);
-    current_index = -1;
-    request_data();
-}
-
 static void request_data() {
     Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeViewer);
 	Tuplet book_tuple = TupletCString(KEY_BOOK, current_book.name);
@@ -187,15 +176,10 @@ static void toggle_favorite() {
 
 static void click_config_provider(Window *window) {
     window_multi_click_subscribe(BUTTON_ID_SELECT, 2, 0, 0, true, select_multi_click_handler);
-    window_long_click_subscribe(BUTTON_ID_SELECT, 0, select_long_click_handler, NULL);
 }
 
 static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context) {
     toggle_favorite();
-}
-
-static void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
-    refresh_viewer();
 }
 
 static void window_load(Window *window) {
