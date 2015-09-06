@@ -4,8 +4,10 @@
 #include "../common.h"
 #include "../appmessage.h"
 
-#define LOADING_TEXT "Loading..."
-#define PADDING 5
+#define LOADING_TEXT        "Loading..."
+#define PADDING             5
+#define SCROLL_UP_JUMP      110
+#define SCROLL_DOWN_JUMP    -(SCROLL_UP_JUMP)
 
 static Book current_book;
 static int current_chapter;
@@ -15,8 +17,6 @@ static int request_token;
 static char *current_text;
 
 static void set_current_text(char *text);
-static void request_data();
-static void toggle_favorite();
 static void click_config_provider(Window *window);
 static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context);
 static void window_load(Window *window);
@@ -89,8 +89,7 @@ void viewer_in_received_handler(DictionaryIterator *iter) {
             strcpy(new_text, current_text);
             strcat(new_text, additional_text);
         }
-        if (NULL != current_text )
-        {
+        if (NULL != current_text && strcmp(current_text, LOADING_TEXT) != 0) {
             free(current_text);
             current_text = NULL;
         }
@@ -111,88 +110,49 @@ static void set_current_text(char *text) {
     scroll_layer_set_content_size(scroll_layer, GSize(bounds.size.w, max_size.h + PADDING*2));
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
-
-static void request_data() {
-    Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeViewer);
-	Tuplet book_tuple = TupletCString(KEY_BOOK, current_book.name);
-    Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
-    Tuplet range_tuple = TupletCString(KEY_RANGE, current_range);
-
-    request_token = (int)time(NULL);
-    Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
-
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Token being sent :%d", request_token);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Book: %s, Chapter: %d, Range: %s", current_book.name, current_chapter, current_range);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Range pointer: %p", current_range);
-    
-	DictionaryIterator *iter;
-	app_message_outbox_begin(&iter);
-
-	if (iter == NULL) {
-		return;
-	}
-
-	dict_write_tuplet(iter, &request_tuple);
-	dict_write_tuplet(iter, &book_tuple);
-    dict_write_tuplet(iter, &chapter_tuple);
-    dict_write_tuplet(iter, &token_tuple);
-    dict_write_tuplet(iter, &range_tuple);
-	dict_write_end(iter);
-
-	app_message_outbox_send();
+static void scroll_text_by(int16_t amount, ScrollLayer *layer) {
+    GPoint point = scroll_layer_get_content_offset(layer);
+    point.y += amount;
+    layer_mark_dirty(scroll_layer_get_layer(layer));
+    scroll_layer_set_content_offset(layer, point, true);
 }
 
-static void toggle_favorite() {
-    Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeToggleFavorite);
-    Tuplet book_tuple = TupletCString(KEY_BOOK, current_book.name);
-    Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
-    Tuplet range_tuple = TupletCString(KEY_RANGE, current_range);
-    
-    request_token = (int)time(NULL);
-    Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
-    
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Token being sent :%d", request_token);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Book: %s, Chapter: %d, Range: %s", current_book.name, current_chapter, current_range);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Range pointer: %p", current_range);
-    
-    DictionaryIterator *iter;
-    app_message_outbox_begin(&iter);
-    
-    if (iter == NULL) {
-        return;
-    }
-    
-    dict_write_tuplet(iter, &request_tuple);
-    dict_write_tuplet(iter, &book_tuple);
-    dict_write_tuplet(iter, &chapter_tuple);
-    dict_write_tuplet(iter, &token_tuple);
-    dict_write_tuplet(iter, &range_tuple);
-    dict_write_end(iter);
-    
-    app_message_outbox_send();
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 
+static void select_single_down_click_handler(ClickRecognizerRef recognizer, void *context) {
+    scroll_text_by(SCROLL_DOWN_JUMP, (ScrollLayer *)context);
+}
+
+static void select_single_up_click_handler(ClickRecognizerRef recognizer, void *context) {
+    scroll_text_by(SCROLL_UP_JUMP, (ScrollLayer *)context);
 }
 
 static void click_config_provider(Window *window) {
     window_multi_click_subscribe(BUTTON_ID_SELECT, 2, 0, 0, true, select_multi_click_handler);
+    window_single_click_subscribe(BUTTON_ID_DOWN, select_single_down_click_handler);
+    window_single_click_subscribe(BUTTON_ID_UP, select_single_up_click_handler);
 }
 
 static void select_multi_click_handler(ClickRecognizerRef recognizer, void *context) {
-    toggle_favorite();
+    request_token = appmessage_viewer_toggle_favorite(current_book.name, current_chapter, current_range);
 }
 
 static void window_load(Window *window) {
     current_text = LOADING_TEXT;
     current_index = -1;
     text_layer_set_text(text_layer, current_text);
-    request_data();
+    request_token = appmessage_viewer_request_data(current_book.name, current_chapter, current_range);
 }
 
 static void window_unload(Window *window) {
-    cancel_request_with_token(request_token);
+    appmessage_cancel_request(request_token);
     request_token = 0;
-    free(current_text);
-    free(current_range);
-    current_text = NULL;
+    if (current_text != NULL && strcmp(current_text, LOADING_TEXT) != 0) {
+        free(current_text);
+        current_text = NULL;
+    }
+    if (current_range != NULL) {
+        free(current_range);
+        current_range = NULL;
+    }
 }

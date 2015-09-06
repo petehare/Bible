@@ -88,7 +88,11 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
     } else {
         title = "Favorites";
     }
-    graphics_context_set_text_color(ctx, GColorBlack);
+    if (menu_cell_layer_is_highlighted(cell_layer)) {
+        graphics_context_set_text_color(ctx, GColorWhite);
+    } else {
+        graphics_context_set_text_color(ctx, GColorBlack);
+    }
     graphics_draw_text(ctx, title, fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 2. }, .size = { PEBBLE_WIDTH - 8, 30 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 }
 

@@ -1,11 +1,13 @@
 #pragma once
 
 typedef enum {
-    ListTypeBook = 0x0,
-    ListTypeVerses = 0x1,
-    ListTypeFavorites = 0x2,
-    ListTypeViewer = 0x3
-} ListType;
+    MessageTypeBook = 0x0,
+    MessageTypeVerses = 0x1,
+    MessageTypeFavorites = 0x2,
+    MessageTypeViewer = 0x3,
+    MessageTypeFavoritesDidChange = 0x4,
+    MessageTypePebbleJSInitialized = 0x05
+} MessageType;
 
 typedef enum {
     TestamentTypeOld = 0x0,
@@ -18,7 +20,7 @@ typedef enum {
     RequestTypeViewer,
     RequestTypeCancel,
     RequestTypeFavorites,
-    RequestTypeToggleFavorite
+    RequestTypeToggleFavorite,
 } RequestType;
 
 const char* testament_to_string(TestamentType testament);
@@ -36,7 +38,7 @@ typedef struct {
 } Favorite;
 
 enum {
-    KEY_LIST,
+    KEY_MESSAGE_TYPE,
     KEY_REQUEST,
     KEY_INDEX,
     KEY_TESTAMENT,

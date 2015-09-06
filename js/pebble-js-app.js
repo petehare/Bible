@@ -1,23 +1,36 @@
 var appMessageQueues = {};
 
+var DEBUG = true;
+var logDebug = function() {
+    if (DEBUG) {
+        console.log.apply(console, arguments);
+    }
+};
+
+var logError = function() {
+    console.log.apply(console, arguments);
+};
+
 var options = {
 	appMessage: {
 		maxTries: 3,
 		retryTimeout: 3000,
 		timeout: 100,
 		packetLength: 80,
-        verseBatch: 30
+        verseBatch: 15
 	},
 	http: {
 		timeout: 20000
 	}
 };
 
-var List = {
+var MessageType = {
 	Book: 0,
     Verses: 1,
     Favorites: 2,
-	Viewer: 3
+	Viewer: 3,
+	FavoritesDidChange: 4,
+	PebbleJSInitialized: 5
 };
 
 var Request = {
@@ -44,16 +57,19 @@ function sendAppMessageQueue(token) {
 		currentAppMessage.numTries = currentAppMessage.numTries || 0;
 		currentAppMessage.transactionId = currentAppMessage.transactionId || -1;
 		if (currentAppMessage.numTries < options.appMessage.maxTries) {
-			console.log('Sending AppMessage to Pebble: ' + JSON.stringify(currentAppMessage.message));
+			logDebug('Sending AppMessage to Pebble: ' + JSON.stringify(currentAppMessage.message) + ', tries: ' + currentAppMessage.numTries);
 			Pebble.sendAppMessage(
 				currentAppMessage.message,
-				function(e) {	
+				function(e) {
+				    if (typeof appMessageQueues[token] === 'undefined') {
+				        return;
+				    }	
 					appMessageQueues[token].shift();
 					setTimeout(function() {
 						sendAppMessageQueue(token);
 					}, options.appMessage.timeout);
 				}, function(e) {
-					console.log('Failed sending AppMessage for transactionId:' + e.data.transactionId + '. Error: ' + e.data.error.message);
+					logError('ERROR: Failed sending AppMessage', e);
 					appMessageQueues[token][0].transactionId = e.data.transactionId;
 					appMessageQueues[token][0].numTries++;
 					setTimeout(function() {
@@ -62,7 +78,7 @@ function sendAppMessageQueue(token) {
 				}
 			);
 		} else {
-			console.log('Failed sending AppMessage for transactionId:' + currentAppMessage.transactionId + '. Bailing. ' + JSON.stringify(currentAppMessage.message));
+			logError('ERROR: Failed sending AppMessage for transactionId:' + currentAppMessage.transactionId + '. Bailing. ' + JSON.stringify(currentAppMessage.message));
 		}
 	}
 	else
@@ -81,7 +97,7 @@ function sendBooksForTestament(testament, token) {
 	for (var i = 0; i < books.length; i++) {
 		appMessageQueues[token.toString()].push({'message': {
 			'token': token,
-			'list': List.Book,
+			'messageType': MessageType.Book,
 			'index': i,
 			'book': books[i].name,
 			'chapter': books[i].chapters
@@ -93,7 +109,7 @@ function sendBooksForTestament(testament, token) {
 // API requests
 
 function requestVerseRanges(book, chapter, token) {
-  getVerseText(book, chapter, function(response) {
+  getVerseText(token, book, chapter, function(response) {
     var batches = Math.ceil(response.length / options.appMessage.verseBatch);
     appMessageQueues[token.toString()] = [];
     for (var i = 0; i < batches; i++)
@@ -101,7 +117,7 @@ function requestVerseRanges(book, chapter, token) {
      var batchName = ((i * options.appMessage.verseBatch) + 1).toString() + "-" + (Math.min((i + 1) * options.appMessage.verseBatch, response.length)).toString();
       appMessageQueues[token.toString()].push({'message': {
         'token': token,
-        'list': List.Verses,
+        'messageType': MessageType.Verses,
         'index': i,
         'content': batchName
       }});
@@ -112,15 +128,23 @@ function requestVerseRanges(book, chapter, token) {
 
 function requestFavorites(token) {
     appMessageQueues[token.toString()] = [];
-    for (var i = 0; i < favoriteList.count(); i++) {
-        var favorite = favoriteList.favoriteAtIndex(i);
+    if (favoriteList.count() > 0) {
+        for (var i = 0; i < favoriteList.count(); i++) {
+            var favorite = favoriteList.favoriteAtIndex(i);
+            appMessageQueues[token.toString()].push({'message': {
+                'token': token,
+                'messageType': MessageType.Favorites,
+                'index': i,
+                'book': favorite.book,
+                'chapter': favorite.chapter,
+                'range': favorite.range,
+            }});
+        }
+    }
+    else {
         appMessageQueues[token.toString()].push({'message': {
             'token': token,
-            'list': List.Favorites,
-            'index': i,
-            'book': favorite.book,
-            'chapter': favorite.chapter,
-            'range': favorite.range,
+            'messageType': MessageType.Favorites
         }});
     }
     sendAppMessageQueue(token.toString());
@@ -128,7 +152,7 @@ function requestFavorites(token) {
 
 function requestVerseText(book, chapter, rangeString, token) {
   var range = rangeString.split("-");
-  getVerseText(book, chapter, function(response) {
+  getVerseText(token, book, chapter, function(response) {
     var verseText = "";
     for (var i in response)
     {
@@ -145,7 +169,7 @@ function requestVerseText(book, chapter, rangeString, token) {
     {
       appMessageQueues[token.toString()].push({'message': {
         'token': token,
-        'list': List.Viewer,
+        'messageType': MessageType.Viewer,
         'index': j,
         'content': text.substring(j * options.appMessage.packetLength, (j+1) * options.appMessage.packetLength)
       }});
@@ -157,18 +181,27 @@ function requestVerseText(book, chapter, rangeString, token) {
 function toggleFavorite(book, chapter, range, token) {
     
     var favorite = new Favorite({book: book, chapter: chapter, range: range});
+    var didChange = false;
     
     if (favoriteList.contains(favorite)) {
-        favoriteList.remove(favorite);
+        didChange = favoriteList.remove(favorite);
         Pebble.showSimpleNotificationOnPebble("Favorite Removed", book + " " + chapter + ":" + range + " was removed from your favorites");
     } else {
-        favoriteList.add(favorite);
+        didChange = favoriteList.add(favorite);
         Pebble.showSimpleNotificationOnPebble("Favorite Added", book + " " + chapter + ":" + range + " was added to your favorites");
     }
-    favoriteList.save();
+    
+    if (didChange) {
+        appMessageQueues[token.toString()] = [];
+        appMessageQueues[token.toString()].push({'message': {
+            'token': token,
+            'messageType': MessageType.FavoritesDidChange
+        }});
+        sendAppMessageQueue(token.toString());
+    }
 }
 
-function getVerseText(book, chapter, completion) {
+function getVerseText(token, book, chapter, completion) {
 
     if (bibleCache.hasOwnProperty(book+chapter))
     {
@@ -178,7 +211,7 @@ function getVerseText(book, chapter, completion) {
 
 	var xhr = new XMLHttpRequest();
 	var url = "http://labs.bible.org/api/?passage="+encodeURI(book + ' ' + chapter)+"&type=json";
-	console.log("Fetching verse data from: " + url);
+	logDebug("Fetching verse data from: " + url);
 	xhr.open('GET', url);
 	xhr.timeout = options.http.timeout;
 	xhr.onload = function(e) {
@@ -189,32 +222,43 @@ function getVerseText(book, chapter, completion) {
                     bibleCache[book+chapter] = res;
                     completion(res);
 				} else {
-					console.log('Invalid response received! ' + JSON.stringify(xhr));
+					logError('ERROR: Invalid response received! ' + JSON.stringify(xhr));
 				}
 			} else {
-				console.log('Request returned error code ' + xhr.status.toString());
+				logError('ERROR: Request returned error code ' + xhr.status.toString());
 			}
 		}
 	};
 	xhr.ontimeout = function() {
-		console.log('HTTP request timed out');
-		appMessageQueue.push({'message': {'error': 'Error: Request timed out!'}});
-		sendAppMessageQueue();
+		logError('ERROR: HTTP request timed out');
+		appMessageQueues[token.toString()].push({'message': {'error': 'Error: Request timed out!'}});
+		sendAppMessageQueue(token.toString());
 	};
 	xhr.onerror = function() {
-		console.log('HTTP request returned error');
-		appMessageQueue.push({'message': {'error': 'Error: Failed to connect!'}});
-		sendAppMessageQueue();
+		logError('ERROR: HTTP request returned error');
+		appMessageQueues[token.toString()].push({'message': {'error': 'Error: Failed to connect!'}});
+		sendAppMessageQueue(token.toString());
 	};
 	xhr.send(null);
 }
 
 Pebble.addEventListener('ready', function(e) {
-	console.log('JS application ready to go!');
+	logDebug('JS application ready to go!');
+    setTimeout(function() {
+        Pebble.sendAppMessage({
+                'messageType': MessageType.PebbleJSInitialized
+            },
+            function(e) {	
+            }, 
+            function(e) {
+                logError('ERROR: Failed sending Initialization Message', e);
+            }
+        );
+	}, 10);
 });
 
 Pebble.addEventListener('appmessage', function(e) {
-	console.log('AppMessage received from Pebble: ' + JSON.stringify(e.payload));
+	logDebug('AppMessage received from Pebble: ' + JSON.stringify(e.payload));
 
 	var request = e.payload.request;
 	var token = e.payload.token || 0;
