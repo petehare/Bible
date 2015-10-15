@@ -17,7 +17,6 @@ static int num_ranges;
 static int request_token;
 
 static void refresh_list();
-static void request_data();
 static uint16_t menu_get_num_sections_callback(struct MenuLayer *menu_layer, void *callback_context);
 static uint16_t menu_get_num_rows_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context);
 static int16_t menu_get_header_height_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context);
@@ -88,32 +87,8 @@ static void refresh_list() {
 	num_ranges = 0;
 	menu_layer_set_selected_index(menu_layer, (MenuIndex) { .row = 0, .section = 0 }, MenuRowAlignBottom, false);
 	menu_layer_reload_data(menu_layer);
-	request_data();
+	request_token = appmessage_verseslist_request_data(current_book->name, current_chapter);
 	menu_layer_reload_data(menu_layer);
-}
-
-static void request_data() {
-    Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeVerses);
-    Tuplet book_tuple = TupletCString(KEY_BOOK, current_book->name);
-    Tuplet chapter_tuple = TupletInteger(KEY_CHAPTER, current_chapter);
-
-    request_token = (int)time(NULL);
-    Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
-
-	DictionaryIterator *iter;
-	app_message_outbox_begin(&iter);
-
-	if (iter == NULL) {
-		return;
-	}
-
-	dict_write_tuplet(iter, &request_tuple);
-	dict_write_tuplet(iter, &book_tuple);
-    dict_write_tuplet(iter, &chapter_tuple);
-    dict_write_tuplet(iter, &token_tuple);
-	dict_write_end(iter);
-
-	app_message_outbox_send();
 }
 
 static uint16_t menu_get_num_sections_callback(struct MenuLayer *menu_layer, void *callback_context) {
@@ -140,7 +115,11 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
 	if (num_ranges == 0) {
 		menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
 	} else {
-        graphics_context_set_text_color(ctx, GColorBlack);
+	    if (menu_cell_layer_is_highlighted(cell_layer)) {
+            graphics_context_set_text_color(ctx, GColorWhite);
+        } else {
+            graphics_context_set_text_color(ctx, GColorBlack);
+	    }
 		graphics_draw_text(ctx, ranges[cell_index->row], fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 28 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 	}
 }
@@ -161,5 +140,5 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
-    cancel_request_with_token(request_token);
+    appmessage_cancel_request(request_token);
 }

@@ -10,10 +10,9 @@
 static Favorite favorites[MAX_FAVORITES];
 
 static int num_favorites;
-static int request_token;
+static int favorites_request_token;
 
 static void refresh_list();
-static void request_data();
 static uint16_t menu_get_num_sections_callback(struct MenuLayer *menu_layer, void *callback_context);
 static uint16_t menu_get_num_rows_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context);
 static int16_t menu_get_header_height_callback(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context);
@@ -27,6 +26,7 @@ static void window_unload(Window *window);
 
 static Window *window;
 static MenuLayer *menu_layer;
+static bool favorites_is_dirty = true;
 
 void favoriteslist_init() {
     window = window_create();
@@ -60,6 +60,10 @@ void favoriteslist_destroy(void) {
     window_destroy_safe(window);
 }
 
+void favoriteslist_mark_dirty(void) {
+    favorites_is_dirty = true;
+}
+
 void favoriteslist_in_received_handler(DictionaryIterator *iter) {
     Tuple *token_tuple = dict_find(iter, KEY_TOKEN);
     Tuple *index_tuple = dict_find(iter, KEY_INDEX);
@@ -67,8 +71,12 @@ void favoriteslist_in_received_handler(DictionaryIterator *iter) {
     Tuple *chapter_tuple = dict_find(iter, KEY_CHAPTER);
     Tuple *range_tuple = dict_find(iter, KEY_RANGE);
     
+    if (!token_tuple || token_tuple->value->int32 != favorites_request_token) {
+        return;
+    }
+
+    favorites_is_dirty = false;
     if (index_tuple && token_tuple && book_tuple && chapter_tuple && range_tuple) {
-        if (token_tuple->value->int32 != request_token) return;
         if (index_tuple->value->int16 > MAX_FAVORITES) return;
         
         Favorite favorite;
@@ -81,39 +89,22 @@ void favoriteslist_in_received_handler(DictionaryIterator *iter) {
         
         favorites[index_tuple->value->int16] = favorite;
         num_favorites++;
-        menu_layer_reload_data(menu_layer);
     }
+    menu_layer_reload_data(menu_layer);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 
 static void refresh_list() {
+    if (!favorites_is_dirty) {
+        return;
+    }
     memset(favorites, 0x0, sizeof(favorites));
     num_favorites = 0;
     menu_layer_set_selected_index(menu_layer, (MenuIndex) { .row = 0, .section = 0 }, MenuRowAlignBottom, false);
     menu_layer_reload_data(menu_layer);
-    request_data();
+    favorites_request_token = appmessage_favoriteslist_request_data();
     menu_layer_reload_data(menu_layer);
-}
-
-static void request_data() {
-    Tuplet request_tuple = TupletInteger(KEY_REQUEST, RequestTypeFavorites);
-    
-    request_token = (int)time(NULL);
-    Tuplet token_tuple = TupletInteger(KEY_TOKEN, request_token);
-    
-    DictionaryIterator *iter;
-    app_message_outbox_begin(&iter);
-    
-    if (iter == NULL) {
-        return;
-    }
-    
-    dict_write_tuplet(iter, &request_tuple);
-    dict_write_tuplet(iter, &token_tuple);
-    dict_write_end(iter);
-    
-    app_message_outbox_send();
 }
 
 static uint16_t menu_get_num_sections_callback(struct MenuLayer *menu_layer, void *callback_context) {
@@ -129,7 +120,7 @@ static int16_t menu_get_header_height_callback(struct MenuLayer *menu_layer, uin
 }
 
 static int16_t menu_get_cell_height_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *callback_context) {
-    if (num_favorites == 0) return 86;
+    if (num_favorites == 0 && !favorites_is_dirty) return 86;
     return 34;
 }
 
@@ -138,17 +129,20 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
 }
 
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Displaying favorite for a book");
-    if (num_favorites == 0) {
+    if (menu_cell_layer_is_highlighted(cell_layer)) {
+        graphics_context_set_text_color(ctx, GColorWhite);
+    } else {
         graphics_context_set_text_color(ctx, GColorBlack);
+    }
+    if (favorites_is_dirty) {
+        graphics_draw_text(ctx, "Loading...", fonts_get_system_font(FONT_KEY_GOTHIC_18), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 16, 80 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    } else if (num_favorites == 0) {
         graphics_draw_text(ctx, "Double tap the “Select” button while reading to add or remove favorites", fonts_get_system_font(FONT_KEY_GOTHIC_18), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 16, 80 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
     } else {
         Favorite favorite = favorites[cell_index->row];
 
         static char title[40];
         snprintf(title, sizeof(title), "%s %d:%s", favorite.book.name, favorite.chapter, favorite.range);;
-        
-        graphics_context_set_text_color(ctx, GColorBlack);
         graphics_draw_text(ctx, title, fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 28 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
     }
 }
@@ -170,5 +164,5 @@ static void window_appear(Window *window) {
 }
 
 static void window_unload(Window *window) {
-    cancel_request_with_token(request_token);
+    appmessage_cancel_request(favorites_request_token);
 }

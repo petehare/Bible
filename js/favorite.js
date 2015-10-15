@@ -58,8 +58,11 @@ function FavoriteList() {
         if (this.contains(aFavorite)) {
             return false;
         }
-        this.favorites.push(aFavorite);
-        return true;
+        else {
+            this.favorites.push(aFavorite);
+            this.save();
+            return true;
+        }
     };
 
     /*
@@ -79,8 +82,11 @@ function FavoriteList() {
         }
         if (i > -1) {
             this.favorites.splice(favoriteIndex, 1);
+            this.save();
+            return true;
+        } else {
+            return false;
         }
-        return false;
     };
     
     /*
@@ -99,10 +105,16 @@ function FavoriteList() {
      * Reloads the favorite list from persistent storage
      */
     this.reload = function() {
-        var jsonFavorites = JSON.parse(localStorage.getItem('favoriteList')) || [];
-        for (var i = 0; i < jsonFavorites.length; i++) {
-            var favorite = new Favorite(jsonFavorites[i]);
-            this.add(favorite);
+        try {
+            var jsonFavorites = JSON.parse(localStorage.getItem('favoriteList')) || [];
+            for (var i = 0; i < jsonFavorites.length; i++) {
+                var favorite = new Favorite(jsonFavorites[i]);
+                this.add(favorite);
+            }
+        }
+        catch (e) {
+            // catch SyntaxError: Unexpected end of input for dirty
+            logError(e);
         }
     };
     

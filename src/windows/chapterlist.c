@@ -72,9 +72,13 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
 	if (current_book->chapters == 0) {
 		menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
 	} else {
-    char str[4];
-    snprintf(str, 4, "%d", cell_index->row + 1);
-    graphics_context_set_text_color(ctx, GColorBlack);
+        char str[4];
+        snprintf(str, 4, "%d", cell_index->row + 1);
+	    if (menu_cell_layer_is_highlighted(cell_layer)) {
+            graphics_context_set_text_color(ctx, GColorWhite);
+        } else {
+            graphics_context_set_text_color(ctx, GColorBlack);
+	    }
 		graphics_draw_text(ctx, str, fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 24 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 	}
 }
