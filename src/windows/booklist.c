@@ -112,7 +112,17 @@ static int16_t menu_get_cell_height_callback(struct MenuLayer *menu_layer, MenuI
 }
 
 static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *callback_context) {
+#if PBL_ROUND
+	graphics_draw_text(ctx, 
+		testament_to_string(current_testament), 
+		fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), 
+		(GRect) { .origin = { 0, 0 }, .size = { PEBBLE_WIDTH, 16 } }, 
+		GTextOverflowModeTrailingEllipsis, 
+		PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft), 
+		NULL);
+#else
 	menu_cell_basic_header_draw(ctx, cell_layer, testament_to_string(current_testament));
+#endif
 }
 
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
@@ -124,7 +134,13 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
         } else {
             graphics_context_set_text_color(ctx, GColorBlack);
 	    }
-		graphics_draw_text(ctx, books[cell_index->row].name, fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 28 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+		graphics_draw_text(ctx, 
+			books[cell_index->row].name, 
+			fonts_get_system_font(FONT_KEY_GOTHIC_24), 
+			(GRect) { .origin = { PBL_IF_ROUND_ELSE(0, 8), 0 }, .size = { PEBBLE_WIDTH - PBL_IF_ROUND_ELSE(0, 8), 28 } }, 
+			GTextOverflowModeTrailingEllipsis, 
+			PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft), 
+			NULL);
 	}
 }
 

@@ -14,12 +14,24 @@
 #define MENU_CELL_BASIC_CELL_HEIGHT 44
 #endif
 
+#if PBL_RECT
 #ifndef PEBBLE_HEIGHT
 #define PEBBLE_HEIGHT 168
 #endif
 
 #ifndef PEBBLE_WIDTH
 #define PEBBLE_WIDTH 144
+#endif
+#endif
+
+#if PBL_ROUND
+#ifndef PEBBLE_HEIGHT
+#define PEBBLE_HEIGHT 180
+#endif
+
+#ifndef PEBBLE_WIDTH
+#define PEBBLE_WIDTH 180
+#endif
 #endif
 
 #ifndef STATUS_HEIGHT

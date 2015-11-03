@@ -125,7 +125,18 @@ static int16_t menu_get_cell_height_callback(struct MenuLayer *menu_layer, MenuI
 }
 
 static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *callback_context) {
-    menu_cell_basic_header_draw(ctx, cell_layer, "Favorites");
+	const char *header = "Favorites";
+#if PBL_ROUND
+	graphics_draw_text(ctx, 
+		header, 
+		fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), 
+		(GRect) { .origin = { 0, 0 }, .size = { PEBBLE_WIDTH, 16 } }, 
+		GTextOverflowModeTrailingEllipsis, 
+		PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft), 
+		NULL);
+#else
+	menu_cell_basic_header_draw(ctx, cell_layer, header);
+#endif
 }
 
 static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
@@ -134,16 +145,33 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
     } else {
         graphics_context_set_text_color(ctx, GColorBlack);
     }
+
+	const char *row_text = NULL;
+	const char *font = FONT_KEY_GOTHIC_24;
+	int height = 28;
+	int margin = PBL_IF_ROUND_ELSE(0, 8);
     if (favorites_is_dirty) {
-        graphics_draw_text(ctx, "Loading...", fonts_get_system_font(FONT_KEY_GOTHIC_18), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 16, 80 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+    	row_text = "Loading...";
     } else if (num_favorites == 0) {
-        graphics_draw_text(ctx, "Double tap the “Select” button while reading to add or remove favorites", fonts_get_system_font(FONT_KEY_GOTHIC_18), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 16, 80 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+		row_text = "Double tap the “Select” button while reading to add or remove favorites";
+		font = FONT_KEY_GOTHIC_18;
+		height = 80;
+		margin = 8;
     } else {
         Favorite favorite = favorites[cell_index->row];
-
         static char title[40];
-        snprintf(title, sizeof(title), "%s %d:%s", favorite.book.name, favorite.chapter, favorite.range);;
-        graphics_draw_text(ctx, title, fonts_get_system_font(FONT_KEY_GOTHIC_24), (GRect) { .origin = { 8, 0 }, .size = { PEBBLE_WIDTH - 8, 28 } }, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+        snprintf(title, sizeof(title), "%s %d:%s", favorite.book.name, favorite.chapter, favorite.range);
+        row_text = title;
+    }
+    
+    if (row_text != NULL) {
+		graphics_draw_text(ctx, 
+			row_text, 
+			fonts_get_system_font(font), 
+			(GRect) { .origin = { margin, 0 }, .size = { PEBBLE_WIDTH - (margin * PBL_IF_ROUND_ELSE(2, 1)), height } }, 
+			GTextOverflowModeTrailingEllipsis, 
+			PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft), 
+			NULL);
     }
 }
 
