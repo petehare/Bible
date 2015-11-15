@@ -2,9 +2,9 @@
   "uuid": "984949d3-a991-4b1f-8ebb-3ff5867bde67",
   "shortName": "Bible",
   "longName": "Bible",
-  "companyName": "Pete Hare",
+  "companyName": "Bengalbot",
   "versionCode": 4,
-  "versionLabel": "1.1",
+  "versionLabel": "1.2",
   "watchapp": {
     "watchface": false
   },
