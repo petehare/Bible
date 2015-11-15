@@ -4,6 +4,7 @@
 #include "../common.h"
 #include "windows/booklist.h"
 #include "windows/favoriteslist.h"
+#include "windows/coachmark.h"
 
 const char* testament_to_string(TestamentType testament);
 static uint16_t menu_get_num_sections_callback(struct MenuLayer *menu_layer, void *callback_context);
@@ -34,6 +35,8 @@ void testamentlist_init(void) {
     menu_layer_add_to_window(menu_layer, window);
     
     window_stack_push(window, true);
+
+    coachmark_init();
 }
 
 void testamentlist_destroy(void) {
